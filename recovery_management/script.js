@@ -18,6 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let unitPrice = 0;
   let maxQuantity = 1;
   let isEditMode = false;
+  modalOverlay.style.display = "none";
 
   // --- Open modal (Add Mode) ---
   function openModal() {
@@ -248,6 +249,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.updateDeliveryDetails = updateDeliveryDetails;
 
-  // Automatically open the modal on page load!
-  openBtn.click();
+  // NO auto modal opening line here!
+  // openBtn.click(); <-- This line has been removed/commented.
+
 });
