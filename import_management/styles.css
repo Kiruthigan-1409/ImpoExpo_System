@@ -93,12 +93,16 @@ textarea[name="remarks"] {
 
 /* Sidebar */
 .sidebar {
+  position: fixed;
   width: 280px;
-  background: #fff;
+  height: 100vh;  
+  background: white;
   border-right: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
   padding: 24px 0;
+  overflow-y: auto;   
+  z-index: 1000;
 }
 
 .logo-section {
@@ -120,7 +124,7 @@ textarea[name="remarks"] {
 }
 
 .logo i {
-  color: #fff;
+  color: white;
   font-size: 20px;
 }
 
@@ -136,7 +140,6 @@ textarea[name="remarks"] {
   color: #64748b;
 }
 
-/* Navigation */
 .nav-menu {
   flex: 1;
   padding: 0 24px;
@@ -189,7 +192,6 @@ textarea[name="remarks"] {
   font-weight: 500;
 }
 
-/* User Info */
 .user-info {
   display: flex;
   align-items: center;
@@ -206,7 +208,7 @@ textarea[name="remarks"] {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: white;
   font-weight: 600;
   margin-right: 12px;
 }
@@ -225,6 +227,7 @@ textarea[name="remarks"] {
 
 /* Main Content */
 .main-content {
+  margin-left: 260px;    
   flex: 1;
   padding: 32px;
   overflow-y: auto;
@@ -348,47 +351,41 @@ textarea[name="remarks"] {
 
 /* Filters Section */
 .filters-section {
-  background: white;
-  padding: 20px 24px;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  margin-bottom: 24px;
+  margin: 20px 0;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
-.search-bar {
+/* Wrapper to hold input + icon */
+.search-wrapper {
   position: relative;
-  flex: 1;
-  min-width: 250px;
-  max-width: 400px;
+  width: 300px;
 }
 
+/* Search input */
 .search-input {
   width: 100%;
-  padding: 12px 16px 12px 44px;
-  border: 1px solid #d1d5db;
+  padding: 10px 40px 10px 15px;
+  border: 1px solid #cbd5e1;
   border-radius: 8px;
   font-size: 14px;
-  background: #f9fafb;
+  outline: none;
+  background-color: #fff;
+  transition: border 0.2s;
 }
 
 .search-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  background: white;
+  border-color: #2563eb;
 }
 
+/* Magnifying glass icon inside the input */
 .search-icon {
   position: absolute;
-  left: 16px;
+  right: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: #94a3b8;
-  font-size: 16px;
+  color: #6b7280;
+  cursor: pointer;
 }
 
 .filter-controls {

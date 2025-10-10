@@ -55,8 +55,10 @@
 
       <!-- Filters -->
       <section class="filters-section">
-        <input type="text" name="search" placeholder="Search by product or supplier" class="search-input">
-        <span class="search-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
+        <div class="search-wrapper">
+          <input type="text" name="search" placeholder="Search by product or supplier" class="search-input">
+          <span class="search-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
+        </div>
       </section>
 
       <!-- Data Table -->
@@ -174,7 +176,6 @@
         </select>
 
         <input type="hidden" name="import_id" id="import_id">
-
         <label>Price per Kg</label>
         <input type="text" id="productPrice" name="price_per_kg" readonly>
 
