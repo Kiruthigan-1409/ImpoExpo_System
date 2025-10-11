@@ -186,7 +186,6 @@ function applyFilters() {
   const productValue = productFilter.value;
   const statusValue = statusFilter.value.toLowerCase();
   const buyerValue = buyerFilter.value;
-  const sortValue = sortFilter.value;
 
   const rows = table.querySelectorAll('tbody tr.order-row');
 
@@ -226,32 +225,50 @@ function applyFilters() {
 
 // ----------------- Sorting Function -----------------
 let sortDirections = {}; // remember direction for each column
-function sortTable(columnIndex) {
+let currentSortedColumn = null;
+
+function sortTable(columnIndex, reset = false) {
   const tbody = table.querySelector('tbody');
   const rows = Array.from(tbody.querySelectorAll('tr.order-row'));
 
-  const direction = sortDirections[columnIndex] ? -sortDirections[columnIndex] : 1; // toggle
-  sortDirections[columnIndex] = direction;
+  if (reset) {
+    sortDirections = {};
+    currentSortedColumn = null;
+    // Re-apply default SQL order (Pending → Confirmed → Done)
+    rows.sort((a, b) => {
+      const statusOrder = { 'pending': 1, 'confirmed': 2, 'done': 3 };
+      const aStatus = a.cells[7].textContent.trim().toLowerCase();
+      const bStatus = b.cells[7].textContent.trim().toLowerCase();
+      return (statusOrder[aStatus] || 4) - (statusOrder[bStatus] || 4);
+    });
+  } else {
+    const direction = sortDirections[columnIndex] ? -sortDirections[columnIndex] : 1; // toggle
+    sortDirections[columnIndex] = direction;
+    currentSortedColumn = columnIndex;
 
-  rows.sort((a, b) => {
-    let aValue = a.cells[columnIndex].textContent.trim();
-    let bValue = b.cells[columnIndex].textContent.trim();
+    rows.sort((a, b) => {
+      let aValue = a.cells[columnIndex].textContent.trim();
+      let bValue = b.cells[columnIndex].textContent.trim();
 
-    if (columnIndex === 0) { // OrderID
-      aValue = parseInt(aValue.replace('ORD-', ''));
-      bValue = parseInt(bValue.replace('ORD-', ''));
-    } else if (columnIndex === 3) { // Date
-      aValue = new Date(aValue);
-      bValue = new Date(bValue);
-    } else if ([4,5,6].includes(columnIndex)) { // numeric columns
-      aValue = parseFloat(aValue.replace(/[^0-9.-]+/g,"")) || 0;
-      bValue = parseFloat(bValue.replace(/[^0-9.-]+/g,"")) || 0;
-    }
+      if (columnIndex === 0) { // OrderID
+        aValue = parseInt(aValue.replace('ORD-', ''));
+        bValue = parseInt(bValue.replace('ORD-', ''));
+      } else if (columnIndex === 3) { // Deadline Date
+        aValue = new Date(aValue);
+        bValue = new Date(bValue);
+      } else if ([4,5,6].includes(columnIndex)) { // Size, Quantity, Total Price
+        aValue = parseFloat(aValue.replace(/[^0-9.-]+/g,"")) || 0;
+        bValue = parseFloat(bValue.replace(/[^0-9.-]+/g,"")) || 0;
+      } else if (columnIndex === 7) { // Status
+        const statusOrder = { 'pending': 1, 'confirmed': 2, 'done': 3 };
+        aValue = statusOrder[aValue.toLowerCase()] || 4;
+        bValue = statusOrder[bValue.toLowerCase()] || 4;
+      }
 
-    return aValue < bValue ? -direction : aValue > bValue ? direction : 0;
-  });
+      return aValue < bValue ? -direction : aValue > bValue ? direction : 0;
+    });
+  }
 
-  // Append rows in new order, keeping details rows attached
   rows.forEach(row => {
     tbody.appendChild(row);
     const detailsRow = row.nextElementSibling;
@@ -259,17 +276,17 @@ function sortTable(columnIndex) {
   });
 }
 
+
 // ----------------- Event Listeners -----------------
 searchInput?.addEventListener('input', applyFilters);
 productFilter?.addEventListener('change', applyFilters);
 statusFilter?.addEventListener('change', applyFilters);
 buyerFilter?.addEventListener('change', applyFilters);
-sortFilter?.addEventListener('change', applyFilters);
 
 // Header click sorting (only for allowed columns)
-const unsortableColumns = [1, 2]; // Product Name, Buyer Name
+const sortableColumns = [0, 3, 4, 5, 6, 7] // Product Name, Buyer Name
 table.querySelectorAll('thead th').forEach((th, idx) => {
-  if (!unsortableColumns.includes(idx)) {
+  if (sortableColumns.includes(idx)) {
     th.style.cursor = 'pointer';
     th.addEventListener('click', () => sortTable(idx));
   } else {
@@ -283,7 +300,15 @@ resetFilterBtn?.addEventListener('click', () => {
   productFilter.value = '';
   statusFilter.value = 'All';
   buyerFilter.value = '';
-  sortFilter.value = '';
+
+  // Reset sorting
+  sortDirections = {};
+  currentSortedColumn = null;
+
+  // Re-append rows in original order based on SQL status
+  sortTable(0, true); // reset = true will restore default SQL order
+
+  // Reapply filters (all rows visible)
   applyFilters();
 });
 
@@ -293,6 +318,38 @@ resetFilterBtn?.addEventListener('click', () => {
     const detailsRow = document.getElementById(orderId);
     detailsRow.style.display = (detailsRow.style.display === 'none' || detailsRow.style.display === '') ? 'table-row' : 'none';
   };
+
+  // ---------------------------------Stock deduction---------------------------
+ 
+// for delete confirmation (existing)
+function confirmDelete(orderId, productName, buyerName, deadline, size, quantity, totalPrice) {
+  const overlay = document.getElementById("deleteModalOverlay");
+  document.getElementById("deleteModalTitle").textContent = "Delete Order";
+  document.getElementById("deleteModalMessage").textContent = "Are you sure you want to delete this order?";
+  document.getElementById("deleteOrderIdInput").value = orderId;
+  document.getElementById("deleteForm").action = "delete_order.php";
+  overlay.style.display = "flex";
+}
+
+function confirmMarkDone(orderId, productName, buyerName, deadline, size, quantity, totalPrice, productId) {
+  const overlay = document.getElementById('deleteModalOverlay'); // reuse existing delete modal
+  const deleteForm = document.getElementById('deleteForm'); // form action will be changed
+  const deleteOrderIdInput = document.getElementById('deleteOrderIdInput');
+
+  // Update modal content for done action
+  document.querySelector('.delete-confirmation-content p').textContent =
+    `Are you sure you want to mark order ${orderId} as Done? Stocks will be deducted.`;
+
+  deleteOrderIdInput.value = orderId;
+
+  // Change form action temporarily
+  deleteForm.action = 'deduct_stock.php?order_id=' + orderId + '&product_id=' + productId + '&size=' + size + '&quantity=' + quantity;
+
+  overlay.style.display = 'flex';
+}
+function closeDeleteModal() {
+  document.getElementById('deleteModalOverlay').style.display = 'none';
+}
 
   // ----------------- Handle Success Messages -----------------
   const urlParams = new URLSearchParams(window.location.search);
@@ -320,6 +377,38 @@ resetFilterBtn?.addEventListener('click', () => {
     setTimeout(() => document.getElementById('deleteErrorMessage').style.display = 'none', 4000);
     history.replaceState(null, '', window.location.pathname);
   }
+
+// ----------------- Mark as Done Messages -----------------
+if (urlParams.get('done') === '1') {
+    const doneSuccessMessage = document.getElementById('doneSuccessMessage');
+    const msg = urlParams.get('msg');
+
+    if (msg === 'done_success') {
+        doneSuccessMessage.textContent = '✅ Order marked as done and stocks updated successfully!';
+    } else if (msg === 'done_with_expired_warning') {
+        doneSuccessMessage.textContent = '✅ Order marked as done! ⚠️ Some expired stocks were ignored.';
+    }
+
+    doneSuccessMessage.style.display = 'flex';
+    setTimeout(() => doneSuccessMessage.style.display = 'none', 4000);
+    history.replaceState(null, '', window.location.pathname);
+}
+
+// Done Error
+if (urlParams.get('done') === '0') {
+    const doneErrorMessage = document.getElementById('doneErrorMessage');
+    const doneErrorText = document.getElementById('doneErrorText');
+    const msg = urlParams.get('msg');
+
+    if (msg === 'insufficient_stock') {
+        doneErrorText.textContent = '❌ Insufficient stock to complete this order!';
+        doneErrorMessage.style.display = 'flex';
+        setTimeout(() => doneErrorMessage.style.display = 'none', 4000);
+        history.replaceState(null, '', window.location.pathname);
+    }
+}
+
+
 
   //Report generation  :
   const reportOverlay = document.getElementById('reportOverlay');

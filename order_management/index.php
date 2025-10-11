@@ -149,6 +149,13 @@ $completedOrders = $result_completed->fetch_assoc()['completed_orders'];
 <div id="deleteErrorMessage" class="error-message" style="display:none;">
     <p>❌ <span id="errorText"></span></p>
 </div>
+<div id="doneSuccessMessage" class="success-message" style="display:none;">
+  ✅ Order marked as done and stocks updated successfully!
+</div>
+
+<div id="doneErrorMessage" class="error-message" style="display:none;">
+  ❌ <span id="doneErrorText"></span>
+</div>
 
 
      <!-- Filters -->
@@ -165,7 +172,7 @@ $completedOrders = $result_completed->fetch_assoc()['completed_orders'];
     <div class="filter-group">
       <label>&nbsp;</label>
       <button class="reset-filter-btn" id="resetFilterBtn" title="Reset all filters">
-        <i class="fa-solid fa-rotate-left"></i> Reset
+        <i class="fa-solid fa-rotate-left"></i> 
       </button>
     </div>
     
@@ -203,17 +210,6 @@ $completedOrders = $result_completed->fetch_assoc()['completed_orders'];
             echo '<option value="'.$row['buyer_id'].'">'.$row['buyername'].'</option>';
         }
         ?>
-      </select>
-    </div>
-    
-    <div class="filter-group">
-      <label>Sort by</label>
-      <select class="filter-select" id="sortFilter">
-        <option value="">Default</option>
-        <option value="OrderID">Order ID</option>
-        <option value="Deadline Date">Deadline Date</option>
-        <option value="Total Price">Total Price</option>
-        <option value="Product Name">Product Name</option>
       </select>
     </div>
   </div>
@@ -362,30 +358,46 @@ if (strtolower($status) === 'pending') {
         \''.$row['total_price'].'\'
     )">
     <i class="fa-regular fa-trash-can fa-lg" style="color: #ff0000;"></i>
-</button>
-</td>
-        </tr>
+</button>';
 
-        <!-- Hidden details row -->
-        <tr class="order-details" id="order'.$orderId.'" style="display:none;">
-          <td colspan="9">
-            <div class="order-details-content">
-              <p><strong>Delivery Address:</strong> '.$row['order_address'].'</p>
-              <p><strong>Payment Confirmation:</strong> '.$paymentConfirm.'</p>
-              <p><strong>Delivery Confirmation:</strong> '.$deliveryConfirm.'</p>
-              <p><strong>Order Placed Date:</strong> '.$row['order_placed_date'].'</p>
-              <p><strong>Additional Notes:</strong> '.$description.'</p>
-            </div>
-          </td>
-        </tr>';
+ // Add Mark as Done button if not done
+   if ($status !== 'Done') {
+        echo '
+        <form method="POST" action="mark_done.php" style="display:inline;">
+          <input type="hidden" name="order_id" value="'.$row['order_id'].'">
+          <input type="hidden" name="product_id" value="'.$row['product_id'].'">
+          <button type="submit" class="action-btn done" title="Mark as Done">
+            <i class="fa-solid fa-check fa-lg" style="color: #009900;"></i>
+          </button>
+        </form>';
     }
+
+echo '
+  </td>
+</tr>
+
+    <!-- Hidden details row -->
+    <tr class="order-details" id="order'.$orderId.'" style="display:none;">
+      <td colspan="9">
+        <div class="order-details-content">
+          <p><strong>Delivery Address:</strong> '.$row['order_address'].'</p>
+          <p><strong>Payment Confirmation:</strong> '.$paymentConfirm.'</p>
+          <p><strong>Delivery Confirmation:</strong> '.$deliveryConfirm.'</p>
+          <p><strong>Order Placed Date:</strong> '.$row['order_placed_date'].'</p>
+          <p><strong>Additional Notes:</strong> '.$description.'</p>
+        </div>
+      </td>
+    </tr>';
+}
+
 } else {
     echo "<tr><td colspan='9'>No orders found</td></tr>";
 }
-
-
-
 ?>
+
+
+
+
 </tbody>
 
     </table>
@@ -472,12 +484,16 @@ if (strtolower($status) === 'pending') {
     Order Volume by Buyers (Bar Chart)
   </label>
         </div>
+<!-- Footer Note -->
+<div class="report-note">
+  <strong>Note:</strong> Excel export will include <em>Order data only</em>, while PDF export can include <em>Order data and charts</em>.
+</div>
 
         <!-- Footer Buttons -->
         <div class="modal-footer">
           <button type="button" class="cancel-btn" onclick="closeReportOverlay()">Cancel</button>
-          <button type="submit" name="download_type" value="pdf" class="save-btn">Download as PDF</button>
-          <button type="submit" name="download_type" value="excel" class="save-btn">Download as Excel</button>
+          <button type="submit" name="download_type" value="pdf" class="save-btn">Download as PDF <i class="fa-solid fa-file-pdf"></i></button>
+          <button type="submit" name="download_type" value="excel" class="save-btn">Download as Excel <i class="fas fa-file-excel"></i></button>
         </div>
 
       </form>
@@ -714,6 +730,31 @@ if (urlParams.get('added') === '1') {
   const today = new Date().toISOString().split('T')[0]; // Format YYYY-MM-DD
   document.getElementById('deadline_date').setAttribute('min', today);
 </script>
+<?php
+if (isset($_GET['done'])) {
+    $msg = $_GET['msg'] ?? '';
+    echo '<script>';
+    if ($_GET['done'] == '1') {
+        if ($msg === 'done_success') {
+            echo 'document.getElementById("doneSuccessMessage").style.display = "flex";';
+        } elseif ($msg === 'done_with_expired_warning') {
+            echo 'document.getElementById("doneSuccessMessage").innerHTML = "✅ Order marked as done! ⚠️ Some expired stocks were ignored.";';
+            echo 'document.getElementById("doneSuccessMessage").style.display = "flex";';
+        }
+    } elseif ($_GET['done'] == '0') {
+        if ($msg === 'insufficient_stock') {
+            echo 'document.getElementById("doneErrorText").textContent = "❌ Insufficient stock to complete this order!";';
+            echo 'document.getElementById("doneErrorMessage").style.display = "flex";';
+        }
+    }
+    echo 'setTimeout(() => {';
+    echo 'document.getElementById("doneSuccessMessage").style.display = "none";';
+    echo 'document.getElementById("doneErrorMessage").style.display = "none";';
+    echo '}, 4000);';
+    echo '</script>';
+}
+?>
+
   
   <?php $conn->close(); ?>
   <script src="script.js" onerror="console.error('Failed to load script.js');"></script>
