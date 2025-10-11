@@ -247,6 +247,250 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
+  // Monthly Report Overlay Logic
+const openReportsBtn = document.getElementById('openReportsBtn');
+const reportsOverlay = document.getElementById('reportsOverlay');
+const closeReportsBtn = document.getElementById('closeReportsBtn');
+const reportForm = document.getElementById('reportForm');
+const reportContent = document.getElementById('reportContent');
+let reportChart;
+
+openReportsBtn.onclick = () => {
+  reportsOverlay.style.display = "flex";
+  reportContent.innerHTML =
+    '<div style="padding:1em;text-align:center;">Select a month and generate!</div>';
+};
+closeReportsBtn.onclick = () => {
+  reportsOverlay.style.display = "none";
+  if (window.reportCharts) window.reportCharts.forEach((c) => c.destroy());
+};
+reportForm.onsubmit = function (e) {
+  e.preventDefault();
+  const month = document.getElementById("monthInput").value;
+  reportContent.innerHTML = "Loading...";
+  fetch(`get_monthly_report.php?month=${month}`)
+    .then((res) => res.json())
+    .then((res) => {
+      if (!res.success) {
+        reportContent.innerHTML = "No data for this month.";
+        return;
+      }
+      const totalQty = res.returned_sum + res.disposed_sum;
+      const lossPercent =
+        totalQty > 0 ? ((res.disposed_sum / totalQty) * 100).toFixed(1) : "0";
+      const returnPercent =
+        totalQty > 0 ? ((res.returned_sum / totalQty) * 100).toFixed(1) : "0";
+      reportContent.innerHTML =
+        `<h3 style="margin-bottom:0.3em; color:#204289;">Monthly Financial Impact Trend</h3>
+        <canvas id="monthlyTrendBar" height="140"></canvas>
+        <div style="display:flex; gap:28px; flex-wrap:wrap; margin-bottom:26px">
+          <div style="background:#f7fafb; border-radius:10px; min-width:175px; padding:1em;">
+            <h2 style="margin:0;color:#4CAF50;">${res.returned_sum || 0}</h2>
+            <div style="color:#7e7;font-weight:bold;">Returned to Stock</div>
+            <div class="subkpi">LKR ${parseFloat(res.returned_impact).toLocaleString(undefined,{minimumFractionDigits:2})}</div>
+          </div>
+          <div style="background:#fff3f3; border-radius:10px; min-width:175px; padding:1em;">
+            <h2 style="margin:0;color:#ef5350;">${res.disposed_sum || 0}</h2>
+            <div style="color:#e57373;font-weight:bold;">Disposed (Written Off)</div>
+            <div class="subkpi">LKR ${parseFloat(res.disposed_impact).toLocaleString(undefined,{minimumFractionDigits:2})}</div>
+          </div>
+          <div style="background:#faf7fa; border-radius:10px; min-width:175px; padding:1em;">
+            <div style="color:#333;">Return Ratio</div>
+            <h2 style="margin:0;color:#4682b4;">${returnPercent}%</h2>
+            <div style="color:#aaa;font-size: 0.92em">of all recovered stock</div>
+          </div>
+          <div style="background:#fff4f2; border-radius:10px; min-width:175px; padding:1em;">
+            <div style="color:#333;">Loss Ratio</div>
+            <h2 style="margin:0;color:#e57373;">${lossPercent}%</h2>
+            <div style="color:#aaa;font-size: 0.92em">of all recovered stock</div>
+          </div>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 32px;">
+          <div><canvas id="actionPie" width="230" height="230"></canvas><div style="text-align:center;font-weight:bold;color:#444">Returned vs Disposed (Qty)</div></div>
+          <div><canvas id="impactBar" height="230"></canvas><div style="text-align:center;font-weight:bold;color:#444">Financial Impact by Action</div></div>
+          <div><canvas id="prodBar" height="230"></canvas><div style="text-align:center;font-weight:bold;color:#444">Product Return/Disposal Split</div></div>
+        </div>
+        <h3 style="margin-top:2em;margin-bottom:.5em; color:#204289;">Detailed Product-wise Flow</h3>
+        <table class="data-table" style="width:100%;margin-bottom:1em;">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th style="color:#288943;">Returned Qty</th>
+              <th style="color:#c62c2e;">Disposed Qty</th>
+              <th style="color:#288943;">Returned Value</th>
+              <th style="color:#c62c2e;">Disposed Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${res.product_breakdown
+              .map(
+                (row) => `
+              <tr>
+                <td>${row.product}</td>
+                <td style="background:#f6fffa;color:#278a5c;">${row.returned || 0}</td>
+                <td style="background:#fff6f7;color:#e94040;">${row.disposed || 0}</td>
+                <td style="background:#f6fffa;color:#278a5c;">LKR ${parseFloat(row.return_impact).toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                })}</td>
+                <td style="background:#fff6f7;color:#c62c2e;">LKR ${parseFloat(row.dispose_impact).toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                })}</td>
+              </tr>
+            `
+              )
+              .join("")}
+          </tbody>
+        </table>
+        <div style="color:#888;padding-bottom:10px;text-align:right;"><small>Note: Red numbers = business loss; Green = cost recovery.</small></div>
+      `;
+
+      // Grouped Bar Chart for monthly financial trend
+      const monthlyTrendBarCtx = document.getElementById("monthlyTrendBar").getContext("2d");
+      let monthlyTrendBar = new Chart(monthlyTrendBarCtx, {
+        type: "bar",
+        data: {
+          labels: res.impact_labels,
+          datasets: [
+            {
+              label: `${res.month_name}`,
+              data: res.impact_selected,
+              backgroundColor: "rgba(76,175,80,0.55)",
+              borderColor: "#2e7d32"
+            },
+            {
+              label: `${res.prev_month_name}`,
+              data: res.impact_prev,
+              backgroundColor: "rgba(242,84,96,0.62)",
+              borderColor: "#f25460"
+            }
+          ]
+        },
+        options: {
+          plugins: {
+            legend: { position: "top" }
+          },
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: "Financial Impact (LKR)" } },
+            x: { title: { display: true, text: "Day of Month" }, stacked: false }
+          },
+          interaction: { mode: "index", intersect: false }
+        }
+      });
+
+      // All other charts (same as before)
+      // Pie chart
+      const pieCtx = document.getElementById("actionPie").getContext("2d");
+      let pieChart = new Chart(pieCtx, {
+        type: "pie",
+        data: {
+          labels: ["Returned", "Disposed"],
+          datasets: [
+            {
+              data: [res.returned_sum, res.disposed_sum],
+              backgroundColor: ["#49c793", "#f25460"],
+            },
+          ],
+        },
+        options: {
+          plugins: {
+            legend: { position: "top" },
+            title: { display: false },
+          },
+        },
+      });
+      // Impact bar
+      const impactCtx = document.getElementById("impactBar").getContext("2d");
+      let impactChart = new Chart(impactCtx, {
+        type: "bar",
+        data: {
+          labels: res.action_data.map((r) => r.action_taken),
+          datasets: [
+            {
+              label: "Financial Impact (LKR)",
+              data: res.action_data.map((r) => r.total_impact),
+              backgroundColor: res.action_data.map((r) =>
+                r.action_taken.toLowerCase() == "disposed"
+                  ? "#f25460"
+                  : r.action_taken.toLowerCase() == "returned"
+                  ? "#49c793"
+                  : "#b0a6f6"
+              ),
+            },
+          ],
+        },
+        options: {
+          plugins: {
+            legend: { display: false },
+            title: { display: false },
+          },
+          scales: { y: { beginAtZero: true } },
+        },
+      });
+      // Product bar
+      const prodCtx = document.getElementById("prodBar").getContext("2d");
+      let prodChart = new Chart(prodCtx, {
+        type: "bar",
+        data: {
+          labels: res.product_breakdown.map((r) => r.product),
+          datasets: [
+            {
+              label: "Returned",
+              data: res.product_breakdown.map((r) => r.returned),
+              backgroundColor: "#49c793",
+            },
+            {
+              label: "Disposed",
+              data: res.product_breakdown.map((r) => r.disposed),
+              backgroundColor: "#f25460",
+            },
+          ],
+        },
+        options: {
+          plugins: {
+            legend: { position: "top" },
+            title: { display: false },
+          },
+          scales: { y: { beginAtZero: true } },
+        },
+      });
+
+      window.reportCharts = [monthlyTrendBar, pieChart, impactChart, prodChart];
+    })
+    .catch((err) => {
+      reportContent.innerHTML =
+        '<span style="color:red">Error loading report.</span>';
+    });
+};
+
+document.getElementById("downloadPdfBtn").onclick = function() {
+  // Select the area to capture (entire modal content except the button itself)
+  const modalContent = document.querySelector('#reportsOverlay .modal-body');
+  html2canvas(modalContent, {
+    backgroundColor: '#fff',
+    scale: 2,
+    useCORS: true
+  }).then(canvas => {
+    // PDF dimensions
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new window.jspdf.jsPDF({
+      orientation: 'p',
+      unit: 'mm',
+      format: 'a4'
+    });
+    // Calculate width/height to fit PDF
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    // Image dimensions
+    const imgProps = pdf.getImageProperties(imgData);
+    const pdfWidth = pageWidth - 16; // Padding
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+    pdf.addImage(imgData, 'PNG', 8, 10, pdfWidth, pdfHeight); // (x, y, w, h)
+    pdf.save('Monthly_Report.pdf');
+  });
+};
+
+
   window.updateDeliveryDetails = updateDeliveryDetails;
 
   // NO auto modal opening line here!
