@@ -53,7 +53,20 @@ $sql_completed = "SELECT COUNT(*) AS completed_orders FROM order_table WHERE sta
 $result_completed = $conn->query($sql_completed);
 $completedOrders = $result_completed->fetch_assoc()['completed_orders'];
 //==========================================================================================================================
+
+// Fetch distinct months from orders
+$monthsResult = $conn->query("
+    SELECT DISTINCT DATE_FORMAT(order_placed_date, '%Y-%m') AS month
+    FROM order_table
+    ORDER BY month ASC
+");
+
+$availableMonths = [];
+while ($row = $monthsResult->fetch_assoc()) {
+    $availableMonths[] = $row['month'];
+}
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -332,6 +345,8 @@ if (strtolower($status) === 'pending') {
           <td>LKR '.$row['total_price'].'</td>
           <td>'.$statusBadge.'</td>
           <td class="actions">
+    <!-- Show Edit button only if status is not Done -->
+    '.($status !== 'Done' ? '
     <button class="action-btn edit" title="Edit" onclick="event.stopPropagation(); editOrder(
         \''.$row['order_id'].'\',
         \''.$row['buyer_id'].'\',
@@ -347,8 +362,10 @@ if (strtolower($status) === 'pending') {
         `'.addslashes($row['description']).'`
     )">
         <i class="fa-regular fa-pen-to-square fa-lg"></i>
-    </button>
-     <button class="action-btn delete" title="Delete" onclick="event.stopPropagation(); confirmDelete(
+    </button>' : '').'
+
+    <!-- Delete button always visible -->
+    <button class="action-btn delete" title="Delete" onclick="event.stopPropagation(); confirmDelete(
         \''.$row['order_id'].'\',
         \''.$row['product_name'].'\',
         \''.$row['buyername'].'\',
@@ -357,23 +374,20 @@ if (strtolower($status) === 'pending') {
         \''.$row['quantity'].'\',
         \''.$row['total_price'].'\'
     )">
-    <i class="fa-regular fa-trash-can fa-lg" style="color: #ff0000;"></i>
-</button>';
+        <i class="fa-regular fa-trash-can fa-lg" style="color: #ff0000;"></i>
+    </button>
 
- // Add Mark as Done button if not done
-   if ($status !== 'Done') {
-        echo '
-        <form method="POST" action="mark_done.php" style="display:inline;">
-          <input type="hidden" name="order_id" value="'.$row['order_id'].'">
-          <input type="hidden" name="product_id" value="'.$row['product_id'].'">
-          <button type="submit" class="action-btn done" title="Mark as Done">
+    <!-- Mark as Done button only if not already done -->
+    '.($status !== 'Done' ? '
+    <form method="POST" action="mark_done.php" style="display:inline;">
+        <input type="hidden" name="order_id" value="'.$row['order_id'].'">
+        <input type="hidden" name="product_id" value="'.$row['product_id'].'">
+        <button type="submit" class="action-btn done" title="Mark as Done">
             <i class="fa-solid fa-check fa-lg" style="color: #009900;"></i>
-          </button>
-        </form>';
-    }
+        </button>
+    </form>' : '').'
+</td>
 
-echo '
-  </td>
 </tr>
 
     <!-- Hidden details row -->
@@ -457,7 +471,14 @@ echo '
           <!-- Month Picker -->
           <div class="form-group period-month" style="margin-top:10px;">
             <label for="reportMonth">Select Month</label>
-            <input type="month" id="reportMonth" name="report_month" disabled>
+            <select id="reportMonth" name="report_month" required>
+    <option value="">-- Select Month --</option>
+    <?php foreach($availableMonths as $m): ?>
+        <option value="<?= $m ?>"><?= date("F Y", strtotime($m.'-01')) ?></option>
+    <?php endforeach; ?>
+</select>
+
+
           </div>
         </div>
 
@@ -480,8 +501,8 @@ echo '
   </label>
   <br>
   <label>
-    <input type="checkbox" name="data_options[]" value="buyer_volume">
-    Order Volume by Buyers (Bar Chart)
+    <input type="checkbox" name="data_options[]" value="revenue_by_product">
+    Revenue by order Product
   </label>
         </div>
 <!-- Footer Note -->
@@ -507,31 +528,54 @@ echo '
 const reportOverlay = document.getElementById('reportOverlay');
 function openReportOverlay() { reportOverlay.style.display = 'flex'; }
 function closeReportOverlay() { reportOverlay.style.display = 'none'; }
-
-// Period toggle logic
+// Period toggle logic with validation support
 const periodRadios = document.querySelectorAll('input[name="period_mode"]');
 const periodRange = document.querySelector('.period-range');
-const periodMonth = document.querySelector('.period-month');
-periodRadios.forEach(radio => {
-  radio.addEventListener('change', () => {
-    if(radio.value === 'range' && radio.checked){
-      periodRange.querySelectorAll('input').forEach(i=>i.disabled=false);
-      periodMonth.querySelector('input').disabled = true;
-    } else if(radio.value === 'month' && radio.checked){
-      periodRange.querySelectorAll('input').forEach(i=>i.disabled=true);
-      periodMonth.querySelector('input').disabled = false;
+const periodMonthDiv = document.querySelector('.period-month');
+const reportMonthSelect = document.getElementById('reportMonth');
+const reportDateFrom = document.getElementById('reportDateFrom');
+const reportDateTo = document.getElementById('reportDateTo');
+const reportForm = document.getElementById('reportForm');
+
+// Toggle fields
+function updatePeriodFields() {
+    const selected = document.querySelector('input[name="period_mode"]:checked').value;
+    if(selected === 'range'){
+        periodRange.querySelectorAll('input').forEach(i => i.disabled = false);
+        reportMonthSelect.disabled = true;
+    } else if(selected === 'month'){
+        periodRange.querySelectorAll('input').forEach(i => i.disabled = true);
+        reportMonthSelect.disabled = false;
     } else { // Lifetime
-      periodRange.querySelectorAll('input').forEach(i=>i.disabled=true);
-      periodMonth.querySelector('input').disabled = true;
+        periodRange.querySelectorAll('input').forEach(i => i.disabled = true);
+        reportMonthSelect.disabled = true;
     }
-  });
+}
+
+// Listen for radio changes
+periodRadios.forEach(r => r.addEventListener('change', updatePeriodFields));
+updatePeriodFields(); // initial call
+
+// Validation on submit
+reportForm.addEventListener('submit', function(e){
+    const selected = document.querySelector('input[name="period_mode"]:checked').value;
+    if(selected === 'range'){
+        if(!reportDateFrom.value || !reportDateTo.value){
+            alert('Please select both From and To dates.');
+            e.preventDefault();
+            return;
+        }
+    } else if(selected === 'month'){
+        if(!reportMonthSelect.value){
+            alert('Please select a month.');
+            e.preventDefault();
+            return;
+        }
+    }
+    // Lifetime: no validation needed
 });
 
-// TODO: populate month picker dynamically from DB
-const availableMonths = ['2025-01','2025-02','2025-03']; // Example
-const monthInput = document.getElementById('reportMonth');
-monthInput.setAttribute('min', availableMonths[0]);
-monthInput.setAttribute('max', availableMonths[availableMonths.length-1]);
+
 </script>
 
 

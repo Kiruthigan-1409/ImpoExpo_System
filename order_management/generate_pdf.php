@@ -83,48 +83,81 @@ function createPieChart($data, $labels, $file, $title){
     imagepng($img,$file);
     imagedestroy($img);
 }
+function createBarChart($data, $labels, $filename, $title, $xlabel, $ylabel){
+    // Chart dimensions
+    $width = 1800;
+    $height = 1000;
+    $margin = 100;
+    $image = imagecreatetruecolor($width, $height);
 
-function createBarChart($data, $labels, $file, $title, $xTitle='X-axis', $yTitle='Y-axis'){
-    $w=400; $h=400;
-    $img=imagecreatetruecolor($w,$h);
-    $white=imagecolorallocate($img,255,255,255);
-    $black=imagecolorallocate($img,0,0,0);
-    $blue=imagecolorallocate($img,54,162,235);
-    imagefill($img,0,0,$white);
+    // Colors
+    $white = imagecolorallocate($image, 255, 255, 255);
+    $black = imagecolorallocate($image, 0, 0, 0);
+    $barColor = imagecolorallocate($image, 52, 168, 83);
+    $gridColor = imagecolorallocate($image, 220, 220, 220);
 
-    imagestring($img,5,($w/2)-strlen($title)*2.5,8,$title,$black);
+    imagefill($image, 0, 0, $white);
 
-    $marginLeft=40; $marginBottom=35; $marginTop=25; $marginRight=15;
-    $plotW=$w-$marginLeft-$marginRight; $plotH=$h-$marginTop-$marginBottom;
+    // ✅ Use TTF font (make sure the file path exists)
+    $font = __DIR__ . '/Roboto-Regular.ttf'; // you can use any .ttf font file in your project folder
 
-    $max=max($data) ?: 1;
-    imageline($img,$marginLeft,$marginTop,$marginLeft,$h-$marginBottom,$black);
-    imageline($img,$marginLeft,$h-$marginBottom,$w-$marginRight,$h-$marginBottom,$black);
+    // Title (large)
+    imagettftext($image, 36, 0, ($width/2) - (strlen($title)*9), 60, $black, $font, $title);
 
-    $barCount=count($data);
-    $barWidth=$plotW/($barCount*1.5);
-    $gap=$barWidth/2;
-    $x=$marginLeft+$gap;
+    // Chart area
+    $chartLeft = $margin + 120;
+    $chartTop = 120;
+    $chartRight = $width - 150;
+    $chartBottom = $height - 200;
 
-    foreach($data as $i=>$val){
-        $bh=($val/$max)*$plotH;
-        $y1=$h-$marginBottom;
-        $y2=$y1-$bh;
-        imagefilledrectangle($img,$x,$y2,$x+$barWidth,$y1,$blue);
+    // Axes
+    imageline($image, $chartLeft, $chartTop, $chartLeft, $chartBottom, $black);
+    imageline($image, $chartLeft, $chartBottom, $chartRight, $chartBottom, $black);
 
-        $percent=round(($val/$max)*100).'%';
-        imagestring($img,2,$x+($barWidth/2)-7,$y2-10,$percent,$black);
-        imagestringup($img,2,$x+($barWidth/2)-4,$h-5,$labels[$i],$black);
+    // Scale
+    $maxValue = max($data);
+    $numYTicks = 6;
+    $yTickStep = $maxValue / $numYTicks;
 
-        $x+=$barWidth+$gap;
+    // Grid + Y labels (bigger font)
+    for($i=0; $i<=$numYTicks; $i++){
+        $y = $chartBottom - (($chartBottom - $chartTop) / $numYTicks * $i);
+        imageline($image, $chartLeft, $y, $chartRight, $y, $gridColor);
+
+        $labelVal = number_format($yTickStep * $i, 0);
+        imagettftext($image, 22, 0, $chartLeft - 120, $y + 8, $black, $font, $labelVal);
     }
 
-    imagestring($img,3,($w/2)-strlen($xTitle)*2.5,$h-20,$xTitle,$black);
-    imagestringup($img,3,8,$marginTop+$plotH/2,$yTitle,$black);
+    // Bars
+    $numBars = count($data);
+    $barSpacing = ($chartRight - $chartLeft) / $numBars;
+    $barWidth = $barSpacing * 0.6;
 
-    imagepng($img,$file);
-    imagedestroy($img);
+    for($i=0; $i<$numBars; $i++){
+        $x1 = $chartLeft + ($i * $barSpacing) + ($barSpacing - $barWidth)/2;
+        $barHeight = ($data[$i] / $maxValue) * ($chartBottom - $chartTop);
+        $y1 = $chartBottom - $barHeight;
+
+        // Bar
+        imagefilledrectangle($image, $x1, $y1, $x1 + $barWidth, $chartBottom, $barColor);
+
+        // Value above bar (big bold)
+        $valText = "LKR " . number_format($data[$i], 0);
+        imagettftext($image, 22, 0, $x1, $y1 - 15, $black, $font, $valText);
+
+        // X labels (horizontal, big)
+        imagettftext($image, 22, 0, $x1, $chartBottom + 40, $black, $font, $labels[$i]);
+    }
+
+    // Axis labels (large)
+    imagettftext($image, 28, 0, ($width/2) - (strlen($xlabel)*9), $height - 60, $black, $font, $xlabel);
+    imagettftext($image, 28, 90, 60, ($height/2) + (strlen($ylabel)*9), $black, $font, $ylabel);
+
+    // Save
+    imagepng($image, $filename);
+    imagedestroy($image);
 }
+
 
 // --------------------
 // Handle Form Submit
@@ -154,21 +187,35 @@ if ($_SERVER['REQUEST_METHOD']==='POST'){
     $stmt->execute();
     $result=$stmt->get_result();
 
-    $rows=[]; $productCount=[]; $statusCount=[]; $buyerCount=[];
-    while($row=$result->fetch_assoc()){
-        $rows[]=$row;
-        $statusCount[$row['status']] = ($statusCount[$row['status']]??0)+1;
+ $rows=[]; 
+$productCount=[]; 
+$statusCount=[]; 
+$buyerCount=[];
+$revenueByProduct=[]; // NEW
 
-        $pid = $row['product_id'];
-        $pRes = $conn->query("SELECT product_name FROM products WHERE product_id=$pid");
-        $pName = $pRes->fetch_assoc()['product_name'] ?? "Product $pid";
-        $productCount[$pName] = ($productCount[$pName]??0)+1;
+while($row=$result->fetch_assoc()){
+    $rows[]=$row;
 
-        $bid = $row['buyer_id'];
-        $bRes = $conn->query("SELECT buyername FROM buyer WHERE buyer_id=$bid");
-        $bName = $bRes->fetch_assoc()['buyername'] ?? "Buyer $bid";
-        $buyerCount[$bName] = ($buyerCount[$bName]??0)+1;
-    }
+    // Count order status
+    $statusCount[$row['status']] = ($statusCount[$row['status']] ?? 0) + 1;
+
+    // Product details
+    $pid = $row['product_id'];
+    $pRes = $conn->query("SELECT product_name FROM products WHERE product_id=$pid");
+    $pName = $pRes->fetch_assoc()['product_name'] ?? "Product $pid";
+
+    // Count and revenue
+    $productCount[$pName] = ($productCount[$pName] ?? 0) + 1;
+    $revenueByProduct[$pName] = ($revenueByProduct[$pName] ?? 0) + (float)$row['total_price'];
+
+    // Buyer details
+    $bid = $row['buyer_id'];
+    $bRes = $conn->query("SELECT buyername FROM buyer WHERE buyer_id=$bid");
+    $bName = $bRes->fetch_assoc()['buyername'] ?? "Buyer $bid";
+    $buyerCount[$bName] = ($buyerCount[$bName] ?? 0) + 1;
+}
+
+
 
     // --------------------
     // Excel Output
@@ -237,7 +284,8 @@ if ($_SERVER['REQUEST_METHOD']==='POST'){
         // Generate charts only for PDF
         if(in_array('popular_product',$dataOptions) && $productCount) createPieChart(array_values($productCount),array_keys($productCount),'popular.png',"Most Popular Product");
         if(in_array('order_status',$dataOptions) && $statusCount) createPieChart(array_values($statusCount),array_keys($statusCount),'status.png',"Order Status Breakdown");
-        if(in_array('buyer_volume',$dataOptions) && $buyerCount) createBarChart(array_values($buyerCount),array_keys($buyerCount),'buyers.png',"Order Volume by Buyers","Buyers","% of Orders");
+if(in_array('revenue_by_product',$dataOptions) && $revenueByProduct)
+    createBarChart(array_values($revenueByProduct), array_keys($revenueByProduct), 'revenue.png', 'Revenue by Products', 'Products', 'Revenue (LKR)');
 
         $pdf = new PDF();
         $pdf->SetAutoPageBreak(true,15);
@@ -245,7 +293,10 @@ if ($_SERVER['REQUEST_METHOD']==='POST'){
 
         if(in_array('popular_product',$dataOptions) && $productCount){ $pdf->Image('popular.png',25,40,140,0); $pdf->Ln(85);}
         if(in_array('order_status',$dataOptions) && $statusCount){ $pdf->Image('status.png',25,$pdf->GetY(),140,0); $pdf->Ln(85);}
-        if(in_array('buyer_volume',$dataOptions) && $buyerCount){ $pdf->Image('buyers.png',15,$pdf->GetY(),90,0); $pdf->Ln(90);}
+if(in_array('revenue_by_product',$dataOptions) && $revenueByProduct){ 
+    $pdf->Image('revenue.png',20,$pdf->GetY(),170,0); 
+    $pdf->Ln(95);
+}
 
         $pdf->SetFont('Arial','B',12);
         $pdf->Cell(0,10,'Database Records',0,1,'C');
