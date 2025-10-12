@@ -220,62 +220,85 @@ while($row=$result->fetch_assoc()){
     // --------------------
     // Excel Output
     // --------------------
-    if($downloadType==='excel'){
-        header("Content-Type: text/csv");
-        header("Content-Disposition: attachment; filename=Order_Report.csv");
-        header("Pragma: no-cache");
-        header("Expires: 0");
+    // --------------------
+// Excel Output
+// --------------------
+// --------------------
+// Excel Output
+// --------------------
+// Excel Output
+if($downloadType==='excel'){
+    header("Content-Type: text/csv");
+    header("Content-Disposition: attachment; filename=Order_Report.csv");
+    header("Pragma: no-cache");
+    header("Expires: 0");
 
-        $output = fopen('php://output','w');
-        fputcsv($output, [$periodText]);
-        fputcsv($output, []);
-        fputcsv($output, ['Order ID','Product ID','Product Name','Buyer ID','Buyer Name','Quantity','Total','Status','Placed Date','Address','Description']);
+    $output = fopen('php://output','w');
 
-        foreach($rows as $row){
-            $pid = $row['product_id'];
-            $pRes = $conn->query("SELECT product_name FROM products WHERE product_id=$pid");
-            $pName = $pRes->fetch_assoc()['product_name'] ?? "Product $pid";
+    
 
-            $bid = $row['buyer_id'];
-            $bRes = $conn->query("SELECT buyername FROM buyer WHERE buyer_id=$bid");
-            $bName = $bRes->fetch_assoc()['buyername'] ?? "Buyer $bid";
+// Title row (centered visually)
+fputcsv($output, array_merge(array_fill(0, intval(5), ''), ['Makgrow Impex']));
+fputcsv($output, array_merge(array_fill(0, intval(4), ''), ['Business Owner: Devakumar Sheron']));
+fputcsv($output, array_merge(array_fill(0, intval(4), ''), ["Database Records ($periodText)"]));
+fputcsv($output, []); // empty row
 
-            fputcsv($output, [
-                $row['order_id'],
-                $pid,
-                $pName,
-                $bid,
-                $bName,
-                $row['quantity'],
-                $row['total_price'],
-                $row['status'],
-                $row['order_placed_date'],
-                $row['order_address'],
-                $row['description'] ?: 'Not specified'
-            ]);
-        }
+    // Column headers (simulate bold by all caps)
+    fputcsv($output, ['ORDER ID','PRODUCT ID','PRODUCT NAME','BUYER ID','BUYER NAME','QUANTITY','TOTAL','STATUS','PLACED DATE','ADDRESS','DESCRIPTION']);
 
-        // Stats only if selected
-        if(!empty($dataOptions)){
-            fputcsv($output, []);
-            fputcsv($output, ['--- Stats ---']);
-            if(in_array('popular_product',$dataOptions)){
-                fputcsv($output,['Most Popular Product']);
-                foreach($productCount as $name=>$count) fputcsv($output,[$name,$count]);
-            }
-            if(in_array('order_status',$dataOptions)){
-                fputcsv($output,['Order Status Breakdown']);
-                foreach($statusCount as $status=>$count) fputcsv($output,[$status,$count]);
-            }
-            if(in_array('buyer_volume',$dataOptions)){
-                fputcsv($output,['Order Volume by Buyers']);
-                foreach($buyerCount as $buyer=>$count) fputcsv($output,[$buyer,$count]);
-            }
-        }
+    // Data rows
+    foreach($rows as $row){
+        $pid = $row['product_id'];
+        $pRes = $conn->query("SELECT product_name FROM products WHERE product_id=$pid");
+        $pName = $pRes->fetch_assoc()['product_name'] ?? "Product $pid";
 
-        fclose($output);
-        exit;
+        $bid = $row['buyer_id'];
+        $bRes = $conn->query("SELECT buyername FROM buyer WHERE buyer_id=$bid");
+        $bName = $bRes->fetch_assoc()['buyername'] ?? "Buyer $bid";
+
+        fputcsv($output, [
+            $row['order_id'],
+            $pid,
+            $pName,
+            $bid,
+            $bName,
+            $row['quantity'],
+            $row['total_price'],
+            $row['status'],
+            $row['order_placed_date'],
+            $row['order_address'],
+            $row['description'] ?: 'Not specified'
+        ]);
     }
+
+    // Stats only if selected
+    if(!empty($dataOptions)){
+        fputcsv($output, []);
+        fputcsv($output, ['--- Stats ---']);
+
+        if(in_array('popular_product',$dataOptions)){
+            fputcsv($output,['Most Popular Product']);
+            foreach($productCount as $name=>$count) fputcsv($output,[$name,$count]);
+        }
+
+        if(in_array('order_status',$dataOptions)){
+            fputcsv($output,['Order Status Breakdown']);
+            foreach($statusCount as $status=>$count) fputcsv($output,[$status,$count]);
+        }
+
+        if(in_array('revenue_by_product',$dataOptions)){
+            fputcsv($output,['Revenue by Product']);
+            foreach($revenueByProduct as $product=>$revenue){
+                fputcsv($output, [$product, 'LKR '.number_format($revenue,2)]);
+            }
+        }
+    }
+
+    fclose($output);
+    exit;
+}
+
+
 
     // --------------------
     // PDF Output
@@ -331,6 +354,11 @@ if(in_array('revenue_by_product',$dataOptions) && $revenueByProduct){
         }
 
         $pdf->Output('I','Order_Report.pdf');
+        // Clean up temporary chart images
+@unlink('popular.png');
+@unlink('status.png');
+@unlink('revenue.png');
+
         exit;
     }
 }

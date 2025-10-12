@@ -556,9 +556,33 @@ function updatePeriodFields() {
 periodRadios.forEach(r => r.addEventListener('change', updatePeriodFields));
 updatePeriodFields(); // initial call
 
+
 // Validation on submit
 reportForm.addEventListener('submit', function(e){
     const selected = document.querySelector('input[name="period_mode"]:checked').value;
+
+    // --- Period validation ---
+    if(selected === 'range'){
+        if(!reportDateFrom.value || !reportDateTo.value){
+            alert('Please select both From and To dates.');
+            e.preventDefault();
+            return;
+        }
+    } else if(selected === 'month'){
+        if(!reportMonthSelect.value){
+            alert('Please select a month.');
+            e.preventDefault();
+            return;
+        }
+    }
+
+    // --- Data options validation ---
+    const dataOptions = document.querySelectorAll('input[name="data_options[]"]:checked');
+    if(dataOptions.length === 0){
+        alert('Please select at least one Data Option to generate the report.');
+        e.preventDefault();
+        return;
+    }
     if(selected === 'range'){
         if(!reportDateFrom.value || !reportDateTo.value){
             alert('Please select both From and To dates.');
