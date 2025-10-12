@@ -270,10 +270,16 @@ function sortTable(columnIndex, reset = false) {
   }
 
   rows.forEach(row => {
-    tbody.appendChild(row);
-    const detailsRow = row.nextElementSibling;
-    if (detailsRow && detailsRow.classList.contains('order-details')) tbody.appendChild(detailsRow);
-  });
+  const detailsId = row.getAttribute('data-details-id'); // add this attr to your order-row in HTML
+  const detailsRow = detailsId ? document.getElementById(detailsId) : null;
+
+  tbody.appendChild(row);
+  if (detailsRow) {
+    tbody.insertBefore(detailsRow, row.nextSibling);
+    detailsRow.style.display = 'none'; // keep them hidden after sort
+  }
+});
+
 }
 
 
@@ -296,6 +302,7 @@ table.querySelectorAll('thead th').forEach((th, idx) => {
 
 // ----------------- Reset Filter Button -----------------
 resetFilterBtn?.addEventListener('click', () => {
+   document.querySelectorAll('.order-details').forEach(r => r.style.display = 'none');
   searchInput.value = '';
   productFilter.value = '';
   statusFilter.value = 'All';
@@ -310,14 +317,41 @@ resetFilterBtn?.addEventListener('click', () => {
 
   // Reapply filters (all rows visible)
   applyFilters();
+   
 });
 
 
   // ----------------- Toggle Order Details -----------------
-  window.toggleDetails = function(orderId) {
-    const detailsRow = document.getElementById(orderId);
-    detailsRow.style.display = (detailsRow.style.display === 'none' || detailsRow.style.display === '') ? 'table-row' : 'none';
-  };
+window.toggleDetails = function(detailsId) {
+  const detailsRow = document.getElementById(detailsId);
+  if (!detailsRow) return;
+
+  const mainRow = document.querySelector(`tr[onclick*="${detailsId}"]`);
+  if (!mainRow) return;
+
+  const tbody = mainRow.closest('tbody');
+  const isVisible = detailsRow.style.display === 'table-row';
+
+  // Always hide all other details first
+  document.querySelectorAll('.order-details').forEach(r => {
+    if (r !== detailsRow) r.style.display = 'none';
+  });
+
+  // Always re-insert detailsRow directly after its main row
+  tbody.insertBefore(detailsRow, mainRow.nextSibling);
+
+  // Toggle visibility
+  detailsRow.style.display = isVisible ? 'none' : 'table-row';
+};
+
+
+// Prevent toggleDetails from triggering when clicking buttons or inputs inside the row
+document.querySelectorAll('.order-row button, .order-row input, .order-row select').forEach(el => {
+  el.addEventListener('click', e => e.stopPropagation());
+});
+
+
+  
 
   // ---------------------------------Stock deduction---------------------------
  
@@ -433,11 +467,5 @@ periodRadios.forEach(radio => {
     }
   });
 });
-
-// TODO: populate month picker dynamically from DB
-const availableMonths = ['2025-01','2025-02','2025-03']; // Example
-const monthInput = document.getElementById('reportMonth');
-monthInput.setAttribute('min', availableMonths[0]);
-monthInput.setAttribute('max', availableMonths[availableMonths.length-1]);
   
 });
