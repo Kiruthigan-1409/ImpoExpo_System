@@ -1,6 +1,4 @@
 <?php
-// Database connection
-// Database connection
 
 define('DB_SERVER', '142.91.102.107');
 define('DB_USER', 'sysadmin_sliitppa25');
@@ -12,24 +10,17 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Generate next Order ID
-// Get the last inserted order_id
 $result = $conn->query("SELECT order_id FROM order_table ORDER BY order_placed_date DESC, order_id DESC LIMIT 1");
 
 if ($row = $result->fetch_assoc()) {
-    // Remove "ORD-" prefix explicitly
-    $lastId = $row['order_id']; // e.g., "ORD-010"
-    $num = (int) substr($lastId, 4); // starts at index 4 → "010" → 10
+    $lastId = $row['order_id']; 
+    $num = (int) substr($lastId, 4); 
     $num++;
-    $orderID = "ORD-" . str_pad($num, 3, "0", STR_PAD_LEFT); // "ORD-011"
+    $orderID = "ORD-" . str_pad($num, 3, "0", STR_PAD_LEFT); 
 } else {
     $orderID = "ORD-001";
 }
 
-
-//BIG 4 ORDER SUMMARY BOX====================================================================================================
-//$addedSuccess = isset($_GET['added']) && $_GET['added'] == 1;    if js at bottom didn't work
-//---------------------------------------------------------------------
 // -------- Orders Placed (total orders) --------
 $sql_total = "SELECT COUNT(*) AS total_orders FROM order_table";
 $result_total = $conn->query($sql_total);
@@ -76,10 +67,13 @@ while ($row = $monthsResult->fetch_assoc()) {
   <title>Order Management - Makgrow Impex</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 </head>
 <body>
     
-
   <div class="app-container">
     
     <?php include '../layout/sidebar.php'; ?>
@@ -93,6 +87,9 @@ while ($row = $monthsResult->fetch_assoc()) {
             <p>Add and Manage your Order</p>
           </div>
           <div class="header-actions">
+            <button id="toggleCalendarBtn" class="btn btn-secondary">
+              <i class="fa-regular fa-calendar-days fa-xl"></i> Show Calendar
+            </button>
             <button class="btn btn-secondary" onclick="openReportOverlay()">
               <span class="icon">
                 <i class="fa-regular fa-file fa-xl"></i>
@@ -170,8 +167,6 @@ while ($row = $monthsResult->fetch_assoc()) {
   ❌ <span id="doneErrorText"></span>
 </div>
 
-
-     <!-- Filters -->
 <!-- Filters -->
 <section class="filters-section">
   <div class="search-bar">
@@ -181,7 +176,7 @@ while ($row = $monthsResult->fetch_assoc()) {
     </span>
   </div>
   <div class="filter-dropdowns">
-    <!-- Add this reset button -->
+    <!--reset button -->
     <div class="filter-group">
       <label>&nbsp;</label>
       <button class="reset-filter-btn" id="resetFilterBtn" title="Reset all filters">
@@ -189,7 +184,6 @@ while ($row = $monthsResult->fetch_assoc()) {
       </button>
     </div>
     
-    <!-- Update this to be a product filter -->
     <div class="filter-group">
       <label>Product</label>
       <select class="filter-select" id="productFilter">
@@ -274,7 +268,6 @@ if ($result->num_rows > 0) {
         $orderId = $row['order_id'];
         $status = $row['status'];
 
-        // -------- Status Badge --------
         $statusClass = '';
         if (strtolower($status) === 'pending') {
             $statusClass = 'pending'; // orange
@@ -318,8 +311,6 @@ if (strtolower($status) === 'pending') {
     $deadlineClass = "deadline-inactive"; // grey
     $deadlineBadge = '<span class="deadline-badge '.$deadlineClass.'">'.$deadline.'</span>';
 }
-
-
         // -------- Boolean fields (True/False) --------
         $paymentConfirm = $row['payment_confirmation'] ? "Confirmed" : "Not confirmed";
         $deliveryConfirm = $row['delivery_confirmation'] ? "Confirmed" : "Not confirmed";
@@ -408,21 +399,13 @@ if (strtolower($status) === 'pending') {
     echo "<tr><td colspan='9'>No orders found</td></tr>";
 }
 ?>
-
-
-
-
 </tbody>
-
     </table>
   </div>
 </section>
-
     </main>
   </div>
   <!-- Modal -->
-
-  <!-- Report Modal Overlay -->
 <!-- Report Modal Overlay -->
 <div class="modal-overlay" id="reportOverlay" style="display: none;">
   <div class="modal" style="max-width: 650px;">
@@ -478,7 +461,6 @@ if (strtolower($status) === 'pending') {
     <?php endforeach; ?>
 </select>
 
-
           </div>
         </div>
 
@@ -492,12 +474,12 @@ if (strtolower($status) === 'pending') {
   <br>
   <label>
     <input type="checkbox" name="data_options[]" value="popular_product">
-    Most Popular Product (Pie Chart)
+    Product Sales Distribution
   </label>
   <br>
   <label>
     <input type="checkbox" name="data_options[]" value="order_status">
-    Order Status Breakdown (Pie Chart)
+    Order Status Breakdown
   </label>
   <br>
   <label>
@@ -507,7 +489,7 @@ if (strtolower($status) === 'pending') {
         </div>
 <!-- Footer Note -->
 <div class="report-note">
-  <strong>Note:</strong> Excel export will include <em>Order data only</em>, while PDF export can include <em>Order data and charts</em>.
+  <strong>Note:</strong> Excel export includes only <em>raw order data and textual statistics</em>, while PDF export can include <em>Order data and charts</em>.
 </div>
 
         <!-- Footer Buttons -->
@@ -528,7 +510,7 @@ if (strtolower($status) === 'pending') {
 const reportOverlay = document.getElementById('reportOverlay');
 function openReportOverlay() { reportOverlay.style.display = 'flex'; }
 function closeReportOverlay() { reportOverlay.style.display = 'none'; }
-// Period toggle logic with validation support
+
 const periodRadios = document.querySelectorAll('input[name="period_mode"]');
 const periodRange = document.querySelector('.period-range');
 const periodMonthDiv = document.querySelector('.period-month');
@@ -552,7 +534,6 @@ function updatePeriodFields() {
     }
 }
 
-// Listen for radio changes
 periodRadios.forEach(r => r.addEventListener('change', updatePeriodFields));
 updatePeriodFields(); // initial call
 
@@ -575,7 +556,6 @@ reportForm.addEventListener('submit', function(e){
             return;
         }
     }
-
     // --- Data options validation ---
     const dataOptions = document.querySelectorAll('input[name="data_options[]"]:checked');
     if(dataOptions.length === 0){
@@ -598,14 +578,7 @@ reportForm.addEventListener('submit', function(e){
     }
     // Lifetime: no validation needed
 });
-
-
 </script>
-
-
-
-
-
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <div class="modal-header">
@@ -635,27 +608,21 @@ reportForm.addEventListener('submit', function(e){
     ?>
   </select>
 </div>
-
   </div>
-
   <div class="form-row">
     <div class="form-group">
       <label for="product">Product *</label>
       <select id="product" name="product_id" required>
         <option value="">Select Product</option>
         <?php
-        // Fetch products from database
-        
         // $result = $conn->query("SELECT product_id, product_name, price_per_kg FROM products WHERE Status='Active'");
         $result = $conn->query("SELECT product_id, product_name, price_per_kg FROM products");
         while ($row = $result->fetch_assoc()) {
             echo '<option value="'.$row['product_id'].'" data-price="'.$row['price_per_kg'].'">'.$row['product_name'].'</option>';
         }
-        
         ?>
       </select>
     </div>
-
     <div class="form-group">
       <label for="size">Packet Size (kg) *</label>
       <input type="number" id="size" name="size" min="1" required>
@@ -721,9 +688,7 @@ reportForm.addEventListener('submit', function(e){
     <button type="button" class="cancel-btn" id="cancelBtn">Cancel</button>
     <button type="submit" class="save-btn">Save Order</button>
   </div>
-
 </form>
-
     </div>
   </div>
 </div>
@@ -759,6 +724,13 @@ reportForm.addEventListener('submit', function(e){
     </div>
   </div>
 </div>
+<!-- Calendar Overlay -->
+<div id="calendarOverlay" class="overlay" style="display:none;">
+  <div class="overlay-content">
+    <button class="close-btn" id="closeCalendarBtn">×</button>
+    <div id="calendar"></div>
+  </div>
+</div>
 <!--Calculating Total price in modal overlay------------------------------------------------>
 <script>
 // Calculate total price automatically
@@ -780,7 +752,6 @@ sizeInput.addEventListener('input', calculateTotal);
 quantityInput.addEventListener('input', calculateTotal);
 </script>
 <!----------------------------------------------------------------------------------------->
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -794,10 +765,8 @@ if (urlParams.get('added') === '1') {
 }
 
 });
-
-  const today = new Date().toISOString().split('T')[0]; // Format YYYY-MM-DD
-  document.getElementById('deadline_date').setAttribute('min', today);
 </script>
+
 <?php
 if (isset($_GET['done'])) {
     $msg = $_GET['msg'] ?? '';
@@ -821,9 +790,7 @@ if (isset($_GET['done'])) {
     echo '}, 4000);';
     echo '</script>';
 }
-?>
-
-  
+?>  
   <?php $conn->close(); ?>
   <script src="script.js" onerror="console.error('Failed to load script.js');"></script>
 </body>

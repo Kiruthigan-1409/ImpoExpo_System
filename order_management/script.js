@@ -1,5 +1,58 @@
 document.addEventListener('DOMContentLoaded', function() {
+  
   // ----------------- Elements -----------------
+  const toggleBtn = document.getElementById('toggleCalendarBtn');
+  const overlay = document.getElementById('calendarOverlay');
+  const ccloseBtn = document.getElementById('closeCalendarBtn');
+
+  let calendar;
+  window.calendarInitialized = false;
+
+  toggleBtn.addEventListener('click', async () => {
+    overlay.style.display = 'flex';
+
+    if (!window.calendarInitialized) {
+      const calendarEl = document.getElementById('calendar');
+
+      let events = [];
+      try {
+        const res = await fetch('get_calendar_events.php');
+        events = await res.json();
+        console.log('Fetched events:', events);
+      } catch (err) {
+        console.error('Failed to fetch events', err);
+      }
+
+      // Use FullCalendar, not 'calendar'
+     calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: 'dayGridMonth',
+    height: 'auto',
+    events: events,
+    eventContent: function(arg) {
+        // arg.event.title is buyer name
+        // arg.event.extendedProps.order_id is the order id
+        return { 
+            html: `<div class="fc-event-name">${arg.event.title}</div>
+                   <div class="fc-event-id">${arg.event.extendedProps.order_id}</div>`
+        };
+    }
+});
+
+
+
+      calendar.render();
+      window.calendarInitialized = true;
+    } else {
+      calendar.render();
+    }
+  });
+
+  ccloseBtn.addEventListener('click', () => {
+    overlay.style.display = 'none';
+  });
+
+
+
 
   const placeOrderBtn = document.getElementById('placeorderButton');
   const modalOverlay = document.getElementById('modalOverlay');
@@ -467,5 +520,5 @@ periodRadios.forEach(radio => {
     }
   });
 });
-  
-});
+
+  });

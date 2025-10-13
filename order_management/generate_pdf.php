@@ -150,7 +150,7 @@ function createBarChart($data, $labels, $filename, $title, $xlabel, $ylabel){
     }
 
     // Axis labels (large)
-    imagettftext($image, 28, 0, ($width/2) - (strlen($xlabel)*9), $height - 60, $black, $font, $xlabel);
+    imagettftext($image, 28, 0, ($width/2) - (strlen($xlabel)*9), $height - 120, $black, $font, $xlabel);
     imagettftext($image, 28, 90, 60, ($height/2) + (strlen($ylabel)*9), $black, $font, $ylabel);
 
     // Save
@@ -277,15 +277,16 @@ fputcsv($output, []); // empty row
         fputcsv($output, ['--- Stats ---']);
 
         if(in_array('popular_product',$dataOptions)){
-            fputcsv($output,['Most Popular Product']);
+            fputcsv($output,['Product Sales Distribution']);
             foreach($productCount as $name=>$count) fputcsv($output,[$name,$count]);
         }
+        fputcsv($output, []); // empty row
 
         if(in_array('order_status',$dataOptions)){
             fputcsv($output,['Order Status Breakdown']);
             foreach($statusCount as $status=>$count) fputcsv($output,[$status,$count]);
         }
-
+        fputcsv($output, []); // empty row
         if(in_array('revenue_by_product',$dataOptions)){
             fputcsv($output,['Revenue by Product']);
             foreach($revenueByProduct as $product=>$revenue){
