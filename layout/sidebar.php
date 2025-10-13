@@ -18,7 +18,7 @@ $baseURL .= '://' . $_SERVER['HTTP_HOST'] . '/ppa_final/ImpoExpo_System/';
       <div class="nav-section">
         <h4>OPERATIONS</h4>
         <ul>
-          <li onclick="window.location.href='<?= $baseURL ?>dashboard.php'">
+          <li onclick="window.location.href='<?= $baseURL ?>dashboard/dashboard.php'">
             <i class="fas fa-chart-line"></i><span>Dashboard</span>
           </li>
           <li onclick="window.location.href='<?= $baseURL ?>import_management/import_management.php'">

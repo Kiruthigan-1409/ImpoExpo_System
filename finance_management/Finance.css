@@ -554,6 +554,150 @@ textarea {
   }
 }
 
+/* ===============================
+   Report Generation Modal
+   =============================== */
+#reportModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1500;
+}
+
+#reportModal.hidden {
+  display: none;
+}
+
+#reportModal .modal-content {
+  background: #fff;
+  border-radius: 12px;
+  width: 380px;
+  max-width: 90%;
+  padding: 24px 28px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.35s ease;
+  position: relative;
+}
+
+#reportModal .close {
+  position: absolute;
+  right: 16px;
+  top: 12px;
+  font-size: 22px;
+  color: #64748b;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+#reportModal .close:hover {
+  color: #e74c3c;
+  transform: rotate(90deg);
+}
+
+#reportModal h2 {
+  text-align: center;
+  color: #1e293b;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 10px;
+}
+
+#reportModal label {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #334155;
+  margin-bottom: 6px;
+  display: block;
+}
+
+#reportModal input[type="radio"],
+#reportModal input[type="checkbox"] {
+  accent-color: #3b82f6;
+  margin-right: 6px;
+  transform: scale(1.1);
+}
+
+#reportModal strong {
+  color: #1e293b;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.modal-actions button {
+  flex: 1;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: 0.3s ease;
+}
+
+/* Buttons */
+#cancelReportBtn {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+#cancelReportBtn:hover {
+  background: #e2e8f0;
+}
+
+#generateExcelBtn {
+  background: #22c55e;
+  color: white;
+}
+
+#generateExcelBtn:hover {
+  background: #16a34a;
+}
+
+#generatePdfBtn {
+  background: #3b82f6;
+  color: white;
+}
+
+#generatePdfBtn:hover {
+  background: #2563eb;
+}
+
+/* Animation */
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  #reportModal .modal-content {
+    width: 90%;
+    padding: 20px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .modal-actions button {
+    width: 100%;
+  }
+}
+
 @media (max-width: 768px) {
   .sidebar {
     width: 100%;
