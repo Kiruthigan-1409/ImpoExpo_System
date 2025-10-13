@@ -87,7 +87,7 @@ unset($a);
 
 // Sort, newest to oldest, show latest 10 only
 usort($activities, fn($a, $b) => strtotime($b['date']) - strtotime($a['date']));
-$activities = array_slice($activities, 0, 10);
+$activities = array_slice($activities, 0, 9);
 ?>
 <!DOCTYPE html>
 <html lang="en">
