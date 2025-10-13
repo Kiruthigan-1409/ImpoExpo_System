@@ -32,7 +32,15 @@ if ($period === "month") {
     $periodTitle = "This Year";
 }
 
-$sql = "SELECT p.*, b.buyername as buyer_name FROM payments p LEFT JOIN buyer b ON p.buyer_id = b.buyer_id $where ORDER BY payment_date DESC";
+$sql = "
+    SELECT 
+        p.*, 
+        b.buyername AS buyer_name
+    FROM payments p 
+    LEFT JOIN buyer b ON p.buyer_id = b.buyer_id
+    $where
+    ORDER BY payment_date DESC
+";
 $result = $conn->query($sql);
 
 // create PDF
@@ -48,27 +56,40 @@ $pdf->Ln(6);
 
 // Table header
 $pdf->SetFont('Arial','B',9);
-$w = [35, 30, 35, 25, 25, 30]; // widths for Reference, Date, Buyer, Amount, Method, Status
+$w = [35, 30, 30, 25, 25, 50]; // widths for Reference, Date, Buyer Info, Amount, Method, Status
 $pdf->Cell($w[0],8,"Reference",1);
 $pdf->Cell($w[1],8,"Date",1);
-$pdf->Cell($w[2],8,"Buyer",1);
-$pdf->Cell($w[3],8,"Amount",1);
-$pdf->Cell($w[4],8,"Method",1);
-$pdf->Cell($w[5],8,"Status",1);
+$pdf->Cell($w[2],8,"Buyer (ID - Name)",1);
+$pdf->Cell($w[3],8,"Method",1);
+$pdf->Cell($w[4],8,"Status",1);
+$pdf->Cell($w[5],8,"Amount (LKR)",1);
 $pdf->Ln();
 
 $pdf->SetFont('Arial','',9);
-if ($result) {
+
+$totalAmount = 0;
+
+if ($result && $result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
-        // ensure cell content doesn't overflow too much; you can adjust widths or use MultiCell for long text
+        $buyerText = $row['buyer_id'] . " - " . ($row['buyer_name'] ?? "N/A");
+        $amount = (float)$row['amount'];
+        $totalAmount += $amount;
+
         $pdf->Cell($w[0],7,$row['payment_reference'],1);
         $pdf->Cell($w[1],7,$row['payment_date'],1);
-        $pdf->Cell($w[2],7,substr($row['buyer_name'] ?? $row['buyer_id'],0,20),1);
-        $pdf->Cell($w[3],7,number_format((float)$row['amount'],2),1,0,'R');
-        $pdf->Cell($w[4],7,$row['payment_method'],1);
-        $pdf->Cell($w[5],7,$row['status'],1);
+        $pdf->Cell($w[2],7,substr($buyerText,0,30),1);
+        $pdf->Cell($w[3],7,$row['payment_method'],1);
+        $pdf->Cell($w[4],7,$row['status'],1);
+        $pdf->Cell($w[5],7,number_format($amount,2),1,0,'R');
         $pdf->Ln();
     }
+
+    // Total amount row
+    $pdf->SetFont('Arial','B',10);
+    $pdf->Cell($w[0] + $w[1] + $w[2] + $w[3] + $w[4],8,"Total",1);
+    $pdf->Cell($w[5],8,number_format($totalAmount,2) . " LKR",1,0,'R');
+    $pdf->Ln();
+
 } else {
     $pdf->Cell(array_sum($w),8,"No payments found",1,1,'C');
 }
@@ -88,7 +109,6 @@ if (!empty($charts) && is_array($charts)) {
         if (preg_match('#^data:image/(png|jpeg|jpg);base64,#i', $img, $matches)) {
             $ext = strtolower($matches[1]) === 'jpeg' ? 'jpg' : strtolower($matches[1]);
         } else {
-            // fallback assume png
             $ext = 'png';
         }
 
@@ -97,7 +117,7 @@ if (!empty($charts) && is_array($charts)) {
         $imgData = base64_decode($imgData);
         if ($imgData === false) continue;
 
-        // create temp file with extension so FPDF detects type
+        // create temp file with extension
         $tmp = tempnam(sys_get_temp_dir(), 'chart_');
         $file = $tmp . '.' . $ext;
         file_put_contents($file, $imgData);
@@ -107,21 +127,18 @@ if (!empty($charts) && is_array($charts)) {
             continue;
         }
 
-        // Insert image (respect page margins)
+        // Insert image (centered)
         $y = $pdf->GetY();
-        // If not enough space, add new page
         if ($y + 110 > $pdf->GetPageHeight() - 20) {
             $pdf->AddPage();
             $y = $pdf->GetY();
         }
 
         $typeParam = (strtoupper($ext) === 'JPG' || strtoupper($ext) === 'JPEG') ? 'JPEG' : 'PNG';
-        // center image: set x so image width ~150 fits center
         $x = ($pdf->GetPageWidth() - 150) / 2;
         $pdf->Image($file, $x, $y, 150, 90, $typeParam);
         $pdf->Ln(95);
 
-        // cleanup
         unlink($file);
     }
 }
@@ -131,6 +148,7 @@ while (ob_get_level()) {
     ob_end_clean();
 }
 
-// Output PDF as download (D). FPDF will send headers.
-$pdf->Output("D", "Report.pdf");
+// Output PDF
+$pdf->Output("D", "Finance-Report.pdf");
 exit;
+?>
