@@ -79,8 +79,9 @@
           </thead>
           <tbody>
             <?php
-              $sql = "SELECT i.import_id, i.import_ref, s.suppliername AS supplier, p.product_name AS product,
-                      st.quantity, i.import_date, i.arrival_date, st.expiry_date AS expiry, i.remarks
+              $sql = "SELECT i.import_id, i.import_ref, s.suppliername AS supplier,
+                        p.product_name AS product, st.quantity, i.import_date, 
+                        i.arrival_date, st.expiry_date AS expiry, i.remarks
                       FROM imports i
                       LEFT JOIN supplier s ON i.supplier_id = s.supplier_id
                       LEFT JOIN products p ON i.product_id = p.product_id
@@ -131,16 +132,15 @@
   </div>
 
   <!-- Add Import Modal -->
-  <div id="importModal" class="modal">
+    <div id="importModal" class="modal">
     <div class="modal-content">
       <span class="close-btn">&times;</span>
       <h2>Add Import</h2>
-
       <form id="addImportForm" method="POST" action="save_import.php">
         <?php
-          $lastImport = $conn->query("SELECT import_ref FROM imports ORDER BY import_id DESC LIMIT 1")->fetch_assoc();
-          $num = $lastImport ? intval(str_replace('IMP-', '', $lastImport['import_ref'])) + 1 : 1;
-          $nextImportRef = 'IMP-' . str_pad($num, 3, '0', STR_PAD_LEFT);
+        $lastImport = $conn->query("SELECT import_ref FROM imports ORDER BY import_id DESC LIMIT 1")->fetch_assoc();
+        $num = $lastImport ? intval(str_replace('IMP-', '', $lastImport['import_ref'])) + 1 : 1;
+        $nextImportRef = 'IMP-' . str_pad($num, 3, '0', STR_PAD_LEFT);
         ?>
 
         <label>Import Reference</label>
@@ -150,10 +150,10 @@
         <select name="supplier_id" id="supplierSelect" required>
           <option value="">-- Select Supplier --</option>
           <?php
-            $suppliers = $conn->query("SELECT supplier_id, suppliername FROM supplier");
-            while($s = $suppliers->fetch_assoc()) {
-              echo "<option value='{$s['supplier_id']}'>{$s['suppliername']}</option>";
-            }
+          $suppliers = $conn->query("SELECT supplier_id, suppliername FROM supplier");
+          while($s = $suppliers->fetch_assoc()){
+            echo "<option value='{$s['supplier_id']}'>{$s['suppliername']}</option>";
+          }
           ?>
         </select>
 
@@ -161,25 +161,29 @@
         <select name="product_id" id="productSelect" required>
           <option value="">-- Select Product --</option>
           <?php
-            $products = $conn->query("SELECT p.product_id, p.product_name, p.price_per_kg, s.supplier_id 
-                                      FROM products p
-                                      LEFT JOIN supplier s ON p.product_id = s.s_productid");
-            while($p = $products->fetch_assoc()) {
-              echo "<option value='{$p['product_id']}' 
+          $products = $conn->query("SELECT p.product_id, p.product_name, p.price_per_kg, s.supplier_id 
+                                    FROM products p
+                                    LEFT JOIN supplier s ON p.product_id = s.s_productid");
+          while($p = $products->fetch_assoc()){
+            echo "<option value='{$p['product_id']}' 
                         data-supplier='{$p['supplier_id']}' 
                         data-name='{$p['product_name']}' 
                         data-price='{$p['price_per_kg']}'>
                         {$p['product_name']}
-                    </option>";
-            }
+                  </option>";
+          }
           ?>
         </select>
 
-        <input type="hidden" name="import_id" id="import_id">
+        <input type="hidden" name="update_import" id="add_update_import">
+
+        <label>Product Name</label>
+        <input type="text" id="productName" name="product_name" readonly>
+
         <label>Price per Kg</label>
         <input type="text" id="productPrice" name="price_per_kg" readonly>
 
-        <label>Quantity (kg)</label>
+        <label>Quantity(kg)</label>
         <input type="number" name="quantity" required>
 
         <label>Import Date</label>
@@ -202,41 +206,63 @@
     </div>
   </div>
 
-  <?php
-    if (isset($_GET['edit'])) {
-      $editId = intval($_GET['edit']);
-      $editQuery = $conn->query("
-        SELECT i.*, s.quantity, p.price_per_kg 
-        FROM imports i 
-        LEFT JOIN stock s ON i.stock_id = s.stock_id 
-        LEFT JOIN products p ON i.product_id = p.product_id 
-        WHERE i.import_id = $editId
-      ");
+  <!-- Edit Import Modal -->
+<div id="editImportModal" class="modal">
+  <div class="modal-content">
+    <span class="close-btn">&times;</span>
+    <h2>Edit Import</h2>
+    <form id="editImportForm" method="POST" action="save_import.php">
+      <input type="hidden" name="id" id="edit_update_import">
 
-      if ($editQuery && $editQuery->num_rows > 0) {
-        $edit = $editQuery->fetch_assoc();
-        echo "
-        <script>
-          document.addEventListener('DOMContentLoaded', function() {
-            const modal = document.getElementById('importModal');
-            modal.style.display = 'flex';
-            modal.classList.add('show');
+      <label>Import Reference</label>
+      <input type="text" name="import_ref" id="edit_import_ref" readonly>
 
-            document.getElementById('import_id').value = '{$edit['import_id']}';
-            document.querySelector('[name=\"import_ref\"]').value = '{$edit['import_ref']}';
-            document.querySelector('[name=\"supplier_id\"]').value = '{$edit['supplier_id']}';
-            document.querySelector('[name=\"product_id\"]').value = '{$edit['product_id']}';
-            document.querySelector('[name=\"price_per_kg\"]').value = '{$edit['price_per_kg']}';
-            document.querySelector('[name=\"quantity\"]').value = '{$edit['quantity']}';
-            document.querySelector('[name=\"import_date\"]').value = '{$edit['import_date']}';
-            document.querySelector('[name=\"arrival_date\"]').value = '{$edit['arrival_date']}';
-            document.querySelector('[name=\"expiry\"]').value = '{$edit['expiry_date']}';
-            document.querySelector('[name=\"remarks\"]').value = '{$edit['remarks']}';
-          });
-        </script>";
-      }
-    }
-  ?>
+      <label>Supplier</label>
+      <select name="supplier_id" id="edit_supplierSelect" required>
+        <option value="">-- Select Supplier --</option>
+        <?php
+        $suppliers = $conn->query("SELECT supplier_id, suppliername FROM supplier");
+        while($s = $suppliers->fetch_assoc()){
+          echo "<option value='{$s['supplier_id']}'>{$s['suppliername']}</option>";
+        }
+        ?>
+      </select>
+
+      <label>Product</label>
+      <select name="product_id" id="edit_productSelect" required>
+        <option value="">-- Select Product --</option>
+        <?php
+        $products = $conn->query("SELECT p.product_id, p.product_name FROM products p");
+        while($p = $products->fetch_assoc()){
+          echo "<option value='{$p['product_id']}'>{$p['product_name']}</option>";
+        }
+        ?>
+      </select>
+
+      <label>Quantity (kg)</label>
+      <input type="number" name="quantity" id="edit_quantity" required>
+
+      <label>Import Date</label>
+      <input type="date" name="import_date" id="edit_import_date" required>
+
+      <label>Arrival Date</label>
+      <input type="date" name="arrival_date" id="edit_arrival_date" required>
+
+      <label>Expiry</label>
+      <input type="date" name="expiry" id="edit_expiry" required>
+
+      <label>Remarks</label>
+      <textarea name="remarks" id="edit_remarks"></textarea>
+
+      <div style="display:flex; gap:8px; margin-top:12px;">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <button type="button" id="cancelEditBtn" class="btn btn-secondary">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
   <script src="script.js"></script>
 </body>
 </html>

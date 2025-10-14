@@ -28,37 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if(e.target === importModal) importModal.style.display = 'none'; 
   });
 
-  // Handle Edit button
-document.querySelectorAll('.action-btn.edit').forEach(button => {
-  button.addEventListener('click', async () => {
-    const importId = button.getAttribute('data-id');
-
-    const response = await fetch(`save_import.php?action=get&id=${importId}`);
-    const data = await response.json();
-
-    if (data.success) {
-      document.getElementById('import_id').value = data.import.import_id;
-      document.getElementById('import_ref').value = data.import.import_ref;
-      document.getElementById('supplierSelect').value = data.import.supplier_id;
-
-      // Trigger product filtering
-      supplierSelect.dispatchEvent(new Event('change'));
-
-      document.getElementById('productSelect').value = data.import.product_id;
-      document.getElementById('quantity').value = data.import.quantity;
-      document.getElementById('import_date').value = data.import.import_date;
-      document.getElementById('arrival_date').value = data.import.arrival_date;
-      document.getElementById('expiry').value = data.import.expiry_date;
-      document.getElementById('remarks').value = data.import.remarks;
-
-      importModal.style.display = 'flex';
-      importModal.classList.add('show');
-    } else {
-      alert('Error loading import details.');
-    }
-  });
-});
-
   //Filter products by supplier
   supplierSelect.addEventListener('change', () => {
     const supplierId = supplierSelect.value;
@@ -118,5 +87,30 @@ document.querySelectorAll('.action-btn.edit').forEach(button => {
       e.preventDefault();
       return;
     }
+  });
+  // Edit Import modal opening/filling logic
+  document.querySelectorAll('.action-btn.edit').forEach(btn => {
+    btn.addEventListener('click', async e => {
+      e.preventDefault();
+      const form = btn.closest('form');
+      const importId = form.querySelector("input[name='edit']").value;
+      const response = await fetch('save_import.php?action=get&id=' + importId);
+      const data = await response.json();
+      if (data.success) {
+        const imp = data.import;
+        document.getElementById('edit_update_import').value = imp.import_id;
+        document.getElementById('edit_import_ref').value = imp.import_ref;
+        document.getElementById('edit_supplierSelect').value = imp.supplier_id;
+        document.getElementById('edit_productSelect').value = imp.product_id;
+        document.getElementById('edit_quantity').value = imp.quantity; // from stock table
+        document.getElementById('edit_import_date').value = imp.import_date;
+        document.getElementById('edit_arrival_date').value = imp.stock_arrival; // from joined alias
+        document.getElementById('edit_expiry').value = imp.stock_expiry; // from joined alias
+        document.getElementById('edit_remarks').value = imp.remarks;
+        document.getElementById('editImportModal').style.display = 'block';
+      } else {
+        alert('Error fetching import for edit.');
+      }
+    });
   });
 });
