@@ -30,7 +30,7 @@ $baseURL .= '://' . $_SERVER['HTTP_HOST'] . '/ppa_final/ImpoExpo_System/';
           <li onclick="window.location.href='<?= $baseURL ?>delivery_management/delivery.php'">
             <i class="fas fa-truck"></i><span>Delivery Management</span>
           </li>
-          <li onclick="window.location.href='<?= $baseURL ?>suppliers_buyers_management/frontend/supplier.php'">
+          <li onclick="window.location.href='<?= $baseURL ?>suppliers_buyers/frontend/supplier.php'">
             <i class="fas fa-users"></i><span>Suppliers & Buyers</span>
           </li>
           <li onclick="window.location.href='<?= $baseURL ?>finance_management/Finance.php'">

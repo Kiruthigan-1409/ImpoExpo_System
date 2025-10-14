@@ -311,29 +311,28 @@
   <div id="reportModal" class="modal">
     <div class="modal-content">
       <span class="close-btn">&times;</span>
-      <h2>Generate Import Report</h2>
+      <h2>Generate Reports</h2>
 
-      <!-- Date Range Filter -->
-      <div class="report-filters">
-        <label>From:</label>
-        <input type="date" id="reportFromDate">
-        
-        <label>To:</label>
-        <input type="date" id="reportToDate">
-        
-        <button id="applyReportFilter" class="btn btn-primary">Generate Report</button>
+      <!-- Date Range Section -->
+      <div class="report-date-range">
+        <div class="date-input">
+          <label for="reportFrom">From</label>
+          <input type="date" id="reportFrom">
+        </div>
+        <div class="date-input">
+          <label for="reportTo">To</label>
+          <input type="date" id="reportTo">
+        </div>
+        <button id="generateReportBtn" class="btn btn-primary">Generate Report</button>
       </div>
 
-      <!-- Chart / Diagram Area -->
-      <div id="reportCharts" style="margin-top:20px;">
-        <!-- Charts will be rendered here -->
-        <p style="text-align:center; color:#888;">Select a date range.</p>
+      <!-- Placeholder for charts -->
+      <div class="report-placeholder">
+        <p>Select date range.</p>
       </div>
 
-      <!-- PDF Download Button -->
-      <div style="margin-top:20px; text-align:right;">
-        <button id="downloadPdfBtn" class="btn btn-secondary">Download PDF</button>
-      </div>
+      <!-- Download PDF -->
+      <button id="downloadPdfBtn" class="btn btn-secondary" disabled>Download PDF</button>
     </div>
   </div>
 

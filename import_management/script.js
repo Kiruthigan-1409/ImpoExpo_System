@@ -1,12 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // ======== Add Import Elements ========
+  // add imports
   const supplierSelect = document.getElementById('supplierSelect');
   const productSelect = document.getElementById('productSelect');
   const productNameInput = document.getElementById('productName');
   const productPriceInput = document.getElementById('productPrice');
   const addImportForm = document.getElementById('addImportForm');
 
-  // ======== Modal Handling ========
+  // Modal Handling
   const importModal = document.getElementById('importModal');
   const openBtn = document.getElementById('openModal');
   const closeBtn = document.querySelector('.close-btn');
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target === editModal) editModal.style.display = 'none';
   });
 
-  // ======== Filter Products by Supplier (Add Modal) ========
+  // Filter Products by Supplier (Add Modal)
   supplierSelect.addEventListener('change', () => {
     const supplierId = supplierSelect.value;
 
@@ -44,14 +44,14 @@ document.addEventListener('DOMContentLoaded', () => {
     productPriceInput.value = '';
   });
 
-  // ======== Auto-fill Product Info (Add Modal) ========
+  // Auto-fill Product Info (Add Modal)
   productSelect.addEventListener('change', () => {
     const selectedOption = productSelect.options[productSelect.selectedIndex];
     productNameInput.value = selectedOption.dataset.name || '';
     productPriceInput.value = selectedOption.dataset.price || '';
   });
 
-  // ======== Add Import Form Validation ========
+  // Add Import Form Validation
   addImportForm.addEventListener('submit', (e) => {
     const quantity = addImportForm.quantity.value.trim();
     const importDate = addImportForm.import_date.value;
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (new Date(expiryDate) <= new Date(arrivalDate)) { alert("Expiry date must be after arrival date."); e.preventDefault(); return; }
   });
 
-  // ======== Edit Import Modal Opening / Filling ========
+  // Edit Import Modal Opening / Filling
   document.querySelectorAll('.action-btn.edit').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.preventDefault();
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // ======== Filter Products by Supplier (Edit Modal) ========
+  // Filter Products by Supplier (Edit Modal)
   const editSupplierSelect = document.getElementById('edit_supplier_id');
   const editProductSelect = document.getElementById('edit_product_id');
 
@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
     editProductSelect.value = '';
   });
 
-  // ======== Live Search & Filters ========
+  //search and filters
   const searchInput = document.getElementById('searchInput');
   const productFilter = document.getElementById('productFilter');
   const supplierFilter = document.getElementById('supplierFilter');
@@ -181,6 +181,34 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('click', e => {
     if(e.target === reportModal) reportModal.style.display = 'none';
   });
+
+
+  document.getElementById('generateReportBtn').addEventListener('click', () => {
+    const start = document.getElementById('reportFrom').value;
+    const end   = document.getElementById('reportTo').value;
+
+    if(!start || !end) return alert("Select both dates!");
+
+    fetch('report_api.php', {
+        method: 'POST',
+        headers: {'Content-Type':'application/x-www-form-urlencoded'},
+        body: `start_date=${start}&end_date=${end}`
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success){
+            document.getElementById('reportSection').style.display = 'grid';
+
+            // Example: show total orders
+            document.getElementById('totalOrders').textContent = data.rows.length;
+
+            // TODO: Render charts dynamically
+            renderPieChart('productChart', data.productCount);
+            renderBarChart('revenueChart', data.revenueByProduct);
+            renderPieChart('statusChart', data.statusCount);
+        }
+    });
+});
 
 
 });
