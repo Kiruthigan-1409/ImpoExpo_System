@@ -351,61 +351,153 @@ textarea[name="remarks"] {
 
 /* Filters Section */
 .filters-section {
-  margin: 20px 0;
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 24px;
   display: flex;
-  justify-content: flex-end;
+  flex-wrap: wrap;          /* allow wrapping on small screens */
+  gap: 24px;
+  align-items: flex-end;
 }
 
-/* Wrapper to hold input + icon */
-.search-wrapper {
+.search-bar {
   position: relative;
-  width: 300px;
+  flex: 1 1 250px;          /* grows and shrinks, min width 250px */
 }
 
-/* Search input */
 .search-input {
   width: 100%;
-  padding: 10px 40px 10px 15px;
-  border: 1px solid #cbd5e1;
+  padding: 12px 16px 12px 44px;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
   font-size: 14px;
-  outline: none;
-  background-color: #fff;
-  transition: border 0.2s;
+  background: #f8fafc;
 }
 
 .search-input:focus {
-  border-color: #2563eb;
-}
-
-/* Magnifying glass icon inside the input */
-.search-icon {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #6b7280;
-  cursor: pointer;
-}
-
-.filter-controls {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.filter-select {
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  font-size: 14px;
-  background: white;
-  min-width: 160px;
-}
-
-.filter-select:focus {
   outline: none;
   border-color: #3b82f6;
+  background: white;
+}
+
+.search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+}
+
+.filter-dropdowns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-group label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filter-select,
+.filter-group input[type="date"] {
+  padding: 10px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  min-width: 140px;
+}
+
+.filter-select:focus,
+.filter-group input[type="date"]:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.date-label-refresh {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.date-label-refresh label {
+  margin: 0;
+}
+
+/* Keep date inputs styling */
+.filter-date-group .date-filters {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px; /* spacing below label */
+}
+
+/* Refresh Button Next to Dates */
+#refreshBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: #f8fafc;
+  border-radius: 6px;
+  padding: 6px 1px;
+  cursor: pointer;
+  color: #475569;
+  transition: all 0.2s;
+}
+
+#refreshBtn:hover {
+  background: #e2e8f0;
+  color: #2563eb;
+}
+
+#refreshBtn i {
+  font-size: 16px;
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .filters-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .search-bar, .filter-dropdowns {
+    width: 100%;
+  }
+  .filter-dropdowns {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .filter-group {
+    flex-direction: row;
+    width: 100%;
+    gap: 8px;
+    align-items: center;
+  }
+  .filter-group label {
+    min-width: 70px;
+    margin-bottom: 0;
+  }
+  .filter-date-group .date-filters {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+  #refreshBtn {
+    margin-left: 4px;
+  }
 }
 
 /* Data Table */

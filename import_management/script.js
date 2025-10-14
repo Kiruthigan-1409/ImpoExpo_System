@@ -11,6 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const closeBtn = document.querySelector('.close-btn');
   const cancelBtn = document.getElementById('cancelBtn');
 
+  const editModal = document.getElementById('editImportModal');
+  const closeEditBtn = editModal.querySelector('.close-btn');
+  const cancelEditBtn = document.getElementById('cancelEditBtn');
+
   openBtn.addEventListener('click', () => {
   importModal.style.display = 'flex'; 
   importModal.classList.add('show');
@@ -24,8 +28,9 @@ document.addEventListener('DOMContentLoaded', () => {
     importModal.classList.remove('show');
   });
 
-  window.addEventListener('click', e => { 
-    if(e.target === importModal) importModal.style.display = 'none'; 
+  window.addEventListener('click', e => {
+    if (e.target === importModal) importModal.style.display = 'none';
+    if (e.target === editModal) editModal.style.display = 'none';
   });
 
   //Filter products by supplier
@@ -113,4 +118,71 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
+
+  // --- Close / Cancel Edit Import Modal ---
+  closeEditBtn.addEventListener('click', () => {
+    editModal.style.display = 'none';
+  });
+  cancelEditBtn.addEventListener('click', () => {
+    editModal.style.display = 'none';
+  });
+
+  // --- Live Search & Filters ---
+  const searchInput = document.getElementById('searchInput');
+  const productFilter = document.getElementById('productFilter');
+  const supplierFilter = document.getElementById('supplierFilter');
+  const arrivalFrom = document.getElementById('arrivalDateFrom');
+  const arrivalTo = document.getElementById('arrivalDateTo');
+  const dataTable = document.querySelector('.data-table tbody');
+
+  function filterTable() {
+  const searchText = searchInput.value.toLowerCase();
+  const productText = productFilter.value.toLowerCase();
+  const supplierText = supplierFilter.value.toLowerCase();
+  const fromDate = arrivalFrom.value ? new Date(arrivalFrom.value) : null;
+  const toDate = arrivalTo.value ? new Date(arrivalTo.value) : null;
+
+  Array.from(dataTable.rows).forEach(row => {
+    const reference = row.cells[0].textContent.toLowerCase();
+    const supplier = row.cells[1].textContent.toLowerCase();
+    const product = row.cells[2].textContent.toLowerCase();
+    const arrivalDate = new Date(row.cells[5].textContent);
+
+    const matchesSearch = reference.includes(searchText);
+    const matchesProduct = !productText || product.includes(productText);
+    const matchesSupplier = !supplierText || supplier.includes(supplierText);
+    const matchesDate = (!fromDate || arrivalDate >= fromDate) && (!toDate || arrivalDate <= toDate);
+
+    row.style.display = (matchesSearch && matchesProduct && matchesSupplier && matchesDate) ? '' : 'none';
+  });
+}
+
+const refreshBtn = document.getElementById('refreshBtn');
+
+refreshBtn.addEventListener('click', () => {
+  // Clear all filter inputs
+  searchInput.value = '';
+  productFilter.value = '';
+  supplierFilter.value = '';
+  arrivalFrom.value = '';
+  arrivalTo.value = '';
+
+  // Show all table rows
+  Array.from(dataTable.rows).forEach(row => {
+    row.style.display = '';
+  });
+
+  // Remove "No matching data" row if present
+  const noDataRow = document.getElementById('noDataRow');
+  if (noDataRow) noDataRow.remove();
+});
+
+
+  // Attach events
+  searchInput.addEventListener('input', filterTable);
+  productFilter.addEventListener('change', filterTable);
+  supplierFilter.addEventListener('change', filterTable);
+  arrivalFrom.addEventListener('change', filterTable);
+  arrivalTo.addEventListener('change', filterTable);
+  
 });

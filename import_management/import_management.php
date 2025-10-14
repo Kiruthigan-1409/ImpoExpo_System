@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Impex - Import Management</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="import.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 
@@ -55,11 +55,53 @@
 
       <!-- Filters -->
       <section class="filters-section">
-        <div class="search-wrapper">
-          <input type="text" name="search" placeholder="Search by product or supplier" class="search-input">
-          <span class="search-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
+        <div class="search-bar">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input type="text" class="search-input" id="searchInput" placeholder="Search by reference...">
+        </div>
+
+        <div class="filter-dropdowns">
+          <div class="filter-group">
+            <label>Product</label>
+            <select class="filter-select" id="productFilter">
+              <option value="">All Products</option>
+              <?php
+                $products = $conn->query("SELECT product_id, product_name FROM products");
+                while($p = $products->fetch_assoc()){
+                  echo "<option value='{$p['product_name']}'>{$p['product_name']}</option>";
+                }
+              ?>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>Supplier</label>
+            <select class="filter-select" id="supplierFilter">
+              <option value="">All Suppliers</option>
+              <?php
+                $suppliers = $conn->query("SELECT supplier_id, suppliername FROM supplier");
+                while($s = $suppliers->fetch_assoc()){
+                  echo "<option value='{$s['suppliername']}'>{$s['suppliername']}</option>";
+                }
+              ?>
+            </select>
+          </div>
+
+          <div class="filter-group filter-date-group">
+            <div class="date-label-refresh">
+              <label>Arrival Date</label>
+              <button type="button" id="refreshBtn" title="Reset Filters">
+                <i class="fas fa-sync-alt"></i>
+              </button>
+            </div>
+            <div class="date-filters">
+              <input type="date" id="arrivalDateFrom">
+              <input type="date" id="arrivalDateTo">
+            </div>
+          </div>
         </div>
       </section>
+
 
       <!-- Data Table -->
       <section class="table-section">
