@@ -1,9 +1,3 @@
-<?php
-$baseURL = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http');
-$baseURL .= '://' . $_SERVER['HTTP_HOST'] . '/ppa_final/ImpoExpo_System/';
-?>
-
-
 <aside class="sidebar">
   <div>
     <div class="logo-section">
@@ -18,7 +12,7 @@ $baseURL .= '://' . $_SERVER['HTTP_HOST'] . '/ppa_final/ImpoExpo_System/';
       <div class="nav-section">
         <h4>OPERATIONS</h4>
         <ul>
-          <li onclick="window.location.href='<?= $baseURL ?>dashboard/dashboard.php'">
+          <li onclick="window.location.href='<?= $baseURL ?>dashboard.php'">
             <i class="fas fa-chart-line"></i><span>Dashboard</span>
           </li>
           <li onclick="window.location.href='<?= $baseURL ?>import_management/import_management.php'">
@@ -42,11 +36,31 @@ $baseURL .= '://' . $_SERVER['HTTP_HOST'] . '/ppa_final/ImpoExpo_System/';
         </ul>
       </div>
 
+      <?php if ($_SESSION['user_id'] === 'admin') { ?>
+      <div class="nav-section">
+        <h4>USER MANAGEMENT</h4>
+        <ul>
+          <li onclick="window.location.href='<?= $baseURL ?>authentication/user_management.php'">
+            <i class="fas fa-user"></i><span>User Management</span>
+          </li>
+        </ul>
+      </div>
+      <?php } ?>
+
       <div class="nav-section">
         <h4>ANALYTICS</h4>
         <ul>
           <li onclick="window.location.href='<?= $baseURL ?>setting/index.php'">
             <i class="fas fa-cog"></i><span>System Settings</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="nav-section">
+        <h4>LOGOUT</h4>
+        <ul>
+          <li onclick="window.location.href='<?= $baseURL ?>authentication/logout.php'">
+            <i class="fas fa-sign-out-alt"></i><span>Logout</span>
           </li>
         </ul>
       </div>
@@ -61,3 +75,4 @@ $baseURL .= '://' . $_SERVER['HTTP_HOST'] . '/ppa_final/ImpoExpo_System/';
     </div>
   </div>
 </aside>
+
