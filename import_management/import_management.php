@@ -23,7 +23,7 @@
         </div>
         <div class="header-actions">
           <button class="btn btn-secondary">
-            <span class="icon"><i class="fa-regular fa-file fa-xl"></i></span> Monthly Reports
+            <span class="icon"><i class="fa-regular fa-file fa-xl"></i></span> Reports
           </button>
           <button id="openModal" class="btn btn-primary">
             <span class="icon"><i class="fa-solid fa-plus fa-xl"></i></span> New Import
@@ -249,61 +249,93 @@
   </div>
 
   <!-- Edit Import Modal -->
-<div id="editImportModal" class="modal">
-  <div class="modal-content">
-    <span class="close-btn">&times;</span>
-    <h2>Edit Import</h2>
-    <form id="editImportForm" method="POST" action="save_import.php">
-      <input type="hidden" name="id" id="edit_update_import">
+  <div id="editImportModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn">&times;</span>
+      <h2>Edit Import</h2>
+      <form id="editImportForm" method="POST" action="save_import.php">
+        <input type="hidden" name="id" id="edit_update_import">
 
-      <label>Import Reference</label>
-      <input type="text" name="import_ref" id="edit_import_ref" readonly>
+        <label>Import Reference</label>
+        <input type="text" name="import_ref" id="edit_import_ref" readonly>
 
-      <label>Supplier</label>
-      <select name="supplier_id" id="edit_supplierSelect" required>
-        <option value="">-- Select Supplier --</option>
-        <?php
-        $suppliers = $conn->query("SELECT supplier_id, suppliername FROM supplier");
-        while($s = $suppliers->fetch_assoc()){
-          echo "<option value='{$s['supplier_id']}'>{$s['suppliername']}</option>";
-        }
-        ?>
-      </select>
+        <select id="edit_supplier_id" name="supplier_id" required>
+          <option value="">Select Supplier</option>
+          <?php
+          $suppliers = $conn->query("SELECT supplier_id, suppliername FROM supplier");
+          if ($suppliers && $suppliers->num_rows > 0):
+              while($s = $suppliers->fetch_assoc()):
+          ?>
+              <option value="<?= $s['supplier_id'] ?>"><?= $s['suppliername'] ?></option>
+          <?php
+              endwhile;
+          else:
+          ?>
+              <option value="">No suppliers found</option>
+          <?php endif; ?>
+        </select>
 
-      <label>Product</label>
-      <select name="product_id" id="edit_productSelect" required>
-        <option value="">-- Select Product --</option>
-        <?php
-        $products = $conn->query("SELECT p.product_id, p.product_name FROM products p");
-        while($p = $products->fetch_assoc()){
-          echo "<option value='{$p['product_id']}'>{$p['product_name']}</option>";
-        }
-        ?>
-      </select>
+        <select id="edit_product_id" name="product_id" required>
+          <option value="">Select Product</option>
+          <?php foreach($products as $product): ?>
+            <option value="<?= $product['product_id'] ?>" data-supplier="<?= $product['supplier_id'] ?>">
+              <?= $product['product_name'] ?>
+            </option>
+          <?php endforeach; ?>
+        </select>
 
-      <label>Quantity (kg)</label>
-      <input type="number" name="quantity" id="edit_quantity" required>
+        <label>Quantity (kg)</label>
+        <input type="number" name="quantity" id="edit_quantity" required>
 
-      <label>Import Date</label>
-      <input type="date" name="import_date" id="edit_import_date" required>
+        <label>Import Date</label>
+        <input type="date" name="import_date" id="edit_import_date" required>
 
-      <label>Arrival Date</label>
-      <input type="date" name="arrival_date" id="edit_arrival_date" required>
+        <label>Arrival Date</label>
+        <input type="date" name="arrival_date" id="edit_arrival_date" required>
 
-      <label>Expiry</label>
-      <input type="date" name="expiry" id="edit_expiry" required>
+        <label>Expiry</label>
+        <input type="date" name="expiry" id="edit_expiry" required>
 
-      <label>Remarks</label>
-      <textarea name="remarks" id="edit_remarks"></textarea>
+        <label>Remarks</label>
+        <textarea name="remarks" id="edit_remarks"></textarea>
 
-      <div style="display:flex; gap:8px; margin-top:12px;">
-        <button type="submit" class="btn btn-primary">Save Changes</button>
-        <button type="button" id="cancelEditBtn" class="btn btn-secondary">Cancel</button>
-      </div>
-    </form>
+        <div style="display:flex; gap:8px; margin-top:12px;">
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+          <button type="button" id="cancelEditBtn" class="btn btn-secondary">Cancel</button>
+        </div>
+      </form>
+    </div>
   </div>
-</div>
 
+  <!-- Report Modal -->
+  <div id="reportModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn">&times;</span>
+      <h2>Generate Import Report</h2>
+
+      <!-- Date Range Filter -->
+      <div class="report-filters">
+        <label>From:</label>
+        <input type="date" id="reportFromDate">
+        
+        <label>To:</label>
+        <input type="date" id="reportToDate">
+        
+        <button id="applyReportFilter" class="btn btn-primary">Generate Report</button>
+      </div>
+
+      <!-- Chart / Diagram Area -->
+      <div id="reportCharts" style="margin-top:20px;">
+        <!-- Charts will be rendered here -->
+        <p style="text-align:center; color:#888;">Select a date range.</p>
+      </div>
+
+      <!-- PDF Download Button -->
+      <div style="margin-top:20px; text-align:right;">
+        <button id="downloadPdfBtn" class="btn btn-secondary">Download PDF</button>
+      </div>
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>
