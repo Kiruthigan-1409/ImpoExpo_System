@@ -45,7 +45,7 @@ $baseURL .= '://' . $_SERVER['HTTP_HOST'] . '/ppa_final/ImpoExpo_System/';
       <div class="nav-section">
         <h4>ANALYTICS</h4>
         <ul>
-          <li onclick="window.location.href='<?= $baseURL ?>settings/system_settings.php'">
+          <li onclick="window.location.href='<?= $baseURL ?>setting/index.php'">
             <i class="fas fa-cog"></i><span>System Settings</span>
           </li>
         </ul>

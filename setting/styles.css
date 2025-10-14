@@ -16,8 +16,6 @@ body {
   min-height: 100vh;
 }
 
-/* Sidebar */
-
 .sidebar {
   position: fixed;
   width: 280px;
@@ -26,7 +24,6 @@ body {
   border-right: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
-  padding: 0;
   z-index: 1000;
   overflow-y: auto;
 }
@@ -34,7 +31,7 @@ body {
 .logo-section {
   display: flex;
   align-items: center;
-  padding: 22px 24px 15px 24px;
+  padding: 22px 24px 15px;
   border-bottom: 1px solid #f1f3f6;
 }
 
@@ -55,7 +52,6 @@ body {
   font-size: 18px;
   font-weight: 600;
   color: #253043;
-  margin-bottom: 0;
 }
 
 .company-info p {
@@ -63,17 +59,15 @@ body {
   color: #7b8bb9;
 }
 
-/* Navigation */
+/* Navigation Menu */
 .nav-menu {
   flex: 1;
   padding: 12px 0 8px 0;
 }
-
 .nav-section {
   margin-bottom: 27px;
   padding: 0 24px;
 }
-
 .nav-section h4 {
   font-size: 12px;
   font-weight: bold;
@@ -82,40 +76,32 @@ body {
   letter-spacing: 0.6px;
   margin-bottom: 11px;
 }
-
 .nav-section ul {
   list-style: none;
-  padding-left: 0;
-  margin-bottom: 0;
 }
-
 .nav-section li {
   display: flex;
   align-items: center;
   padding: 12px 16px;
   border-radius: 8px;
   cursor: pointer;
-  transition: background .19s;
-  margin-bottom: 4px;
-  color: #334155;
+  transition: background .15s, color .15s;
   font-size: 14px;
   font-weight: 500;
 }
-
 .nav-section li i {
   width: 20px;
   margin-right: 11px;
   font-size: 17px;
-  color: inherit;
   text-align: center;
 }
-
 .nav-section li.active,
 .nav-section li:hover {
   background-color: #eff6ff;
   color: #3b82f6;
 }
 
+/* User Info Panel */
 .user-info {
   display: flex;
   align-items: center;
@@ -124,7 +110,6 @@ body {
   margin-top: auto;
   background: #fff;
 }
-
 .user-avatar {
   width: 40px;
   height: 40px;
@@ -138,22 +123,18 @@ body {
   font-weight: 700;
   margin-right: 11px;
 }
-
 .user-details h4 {
   font-size: 14px;
   font-weight: 600;
   color: #1e293b;
-  margin-bottom: 1px;
 }
-
 .user-details p {
   font-size: 12px;
   color: #64748b;
-  margin: 0;
 }
 
 /* Main Content */
-.main-content {
+.main-content, .settings-main {
   flex: 1;
   padding: 36px 34px 0 34px;
   margin-left: 280px;
@@ -165,56 +146,54 @@ body {
   align-items: flex-start;
   margin-bottom: 15px;
 }
-
 .header-content h1 {
   font-size: 2rem;
   font-weight: 800;
   color: #253043;
-  margin-bottom: 5px;
 }
-
-.header-content p {
+.header-content p, .header-time {
   color: #7b8bb9;
   font-size: 16px;
 }
 
-.header-time {
-  font-size: 13px;
-  color: #7b8bb9;
-  margin-top: 10px;
-}
-
-/* Stats Cards Grid */
 .stats-row {
   display: flex;
   gap: 23px;
   margin-bottom: 20px;
   margin-top: 8px;
 }
-
 .stat-card {
   background: #fff;
   border-radius: 14px;
   box-shadow: 0 1px 8px #e3e8f2;
   border: 1px solid #eef1f7;
-  padding: 20px 24px 20px 24px;
+  padding: 20px 24px;
   display: flex;
+  flex-direction: column;
   gap: 0;
+  align-items: flex-start;
   flex: 1;
   min-width: 150px;
   max-width: 390px;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
 }
-
+.stat-label {
+  font-size: 15px;
+  color: #465a75;
+  font-weight: 500;
+  margin-bottom: 14px;
+  display: block;
+}
 .stat-card-bottom {
   display: flex;
   align-items: center;
   gap: 13px;
   margin-top: auto;
 }
-
+.stat-card strong, .stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #253043;
+}
 .stat-icon {
   width: 44px;
   height: 44px;
@@ -225,36 +204,17 @@ body {
   font-size: 22px;
   margin-right: 8px;
 }
-
 .stat-card.blue .stat-icon { background: #dbeafe; color: #3b82f6; }
 .stat-card.green .stat-icon { background: #dcfce7; color: #22c55e; }
 .stat-card.orange .stat-icon { background: #fef3c7; color: #f59e42; }
 .stat-card.purple .stat-icon { background: #ede9fe; color: #a78bfa; }
 .stat-card.red .stat-icon { background: #fee2e2; color: #ef4444; }
 
-.stat-label {
-  font-size: 15px;
-  color: #465a75;
-  font-weight: 500;
-  margin-bottom: 14px;
-  display: block;
-}
-
-.stat-card strong, .stat-value {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #253043;
-  margin-bottom: 0;
-  margin-top: 0;
-}
-
-/* Activities and Alerts Cards */
 .main-cards-row {
   display: flex;
   gap: 24px;
   margin-bottom: 16px;
 }
-
 .card {
   background: #fff;
   border-radius: 13px;
@@ -265,7 +225,6 @@ body {
   flex-direction: column;
   border: 1px solid #eef1f7;
 }
-
 .card-head {
   font-size: 1.2rem;
   font-weight: 700;
@@ -275,12 +234,11 @@ body {
   align-items: center;
   gap: 10px;
 }
-
 .card-head.red { color: #bc2323; }
-.activities-list {
+.activities-list, .alerts-list {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 13px;
 }
 
 .activity-row {
@@ -289,25 +247,10 @@ body {
   gap: 14px;
 }
 
-.activity-icon {
-  width: 33px;
-  height: 33px;
-  border-radius: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 17px;
-  margin-right: 3px;
-}
-
-.activity-icon.payment { background: #fcefca; color: #d9a540; }
-.activity-icon.shipment { background: #eef6fc; color: #3b82f6; }
-
 .activity-title {
   font-size: 15px;
   font-weight: 600;
   color: #384968;
-  margin-bottom: 2px;
 }
 .activity-date {
   font-size: 12px;
@@ -319,7 +262,6 @@ body {
   font-size: 13px;
   font-weight: 700;
   margin-left: auto;
-  border: none;
 }
 .activity-status.completed { background: #d1fae5; color: #22c55e; }
 .activity-status.refunded { background: #eef6fc; color: #3b82f6; }
@@ -327,11 +269,6 @@ body {
 
 .card.low-stock-card {
   max-width: 400px;
-}
-.alerts-list {
-  display: flex;
-  flex-direction: column;
-  gap: 13px;
 }
 .alert-row {
   background: #fff1f1;
@@ -360,18 +297,148 @@ body {
   padding: 4px 17px;
 }
 
-/* Responsive Design */
+.settings-head {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 30px;
+}
+.settings-sect {
+  margin-bottom: 30px;
+}
+
+.stock-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.stock-badge.low-stock {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.stock-badge.normal-stock {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+
+/* Settings Form */
+.settings-form {
+  display: flex;
+  gap: 13px;
+  margin-bottom: 18px;
+  align-items: center;
+}
+.settings-form input {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #d2d6dc;
+  font-size: 14px;
+}
+.settings-form button {
+  padding: 10px 22px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  background: #3b82f6;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.settings-form button:hover {
+  background: #2563eb;
+}
+
+/* Table for settings/products */
+.table-wrap {
+  background: #fff;
+  border-radius: 13px;
+  box-shadow: 0 2px 18px #e3e8f2;
+  padding: 20px;
+  border: 1px solid #eef1f7;
+}
+.settings-sect table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+}
+.settings-sect th,
+.settings-sect td {
+  padding: 12px 15px;
+  font-size: 15px;
+  text-align: left;
+  border-bottom: 1px solid #f1f3f6;
+}
+.settings-sect th {
+  color: #374151;
+  background: #f8fafc;
+  font-weight: 600;
+}
+.settings-sect tr:nth-child(even) {
+  background: #f9fafb;
+}
+
+/* Buttons */
+.del-btn {
+  background: #ef4444;
+  color: #fff;
+  padding: 6px 13px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.del-btn:hover {
+  background: #dc2626;
+}
+.update-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.update-form input {
+  width: 80px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #d1d5db;
+  font-size: 13px;
+}
+.update-form button {
+  padding: 5px 12px;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.update-form button:hover {
+  background: #059669;
+}
+
+/* Responsive Adjustments */
 @media (max-width: 1200px) {
-  .main-content {padding: 13px;}
-  .header {flex-direction: column;}
-  .stats-row, .main-cards-row {flex-direction: column; gap: 11px;}
+  .main-content, .settings-main {
+    margin-left: 0;
+    padding: 15px;
+  }
   .sidebar {width:100%;}
-  .main-content {margin-left: 0;}
+  .header {flex-direction: column;}
+  .stats-row, .main-cards-row {flex-direction: column; gap: 12px;}
 }
 
 @media (max-width:900px){
-  .main-content{padding:8px;}
   .sidebar{display:none;}
   .dashboard-container{flex-direction:column;}
-  .stats-row {flex-direction: column;}
+  .stats-row, .main-cards-row {flex-direction: column;}
+  .main-content, .settings-main{padding:8px;}
+  .table-wrap {
+    overflow-x: auto;
+  }
 }
