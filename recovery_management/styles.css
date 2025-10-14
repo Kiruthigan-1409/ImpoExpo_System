@@ -611,6 +611,15 @@ body {
   background: #fee2e2;
 }
 
+/* Report */
+#reportsOverlay .modal {
+  max-width: 700px;
+}
+#reportsOverlay {
+  z-index: 99999;
+}
+
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .sidebar {

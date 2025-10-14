@@ -1,7 +1,9 @@
+// finance.js — updated: trend analysis + forecast + chart labels (amounts & percentages)
 document.addEventListener("DOMContentLoaded", function () {
 
+  // Register datalabels if available (safe)
   if (typeof Chart !== "undefined" && typeof ChartDataLabels !== "undefined") {
-  Chart.register(ChartDataLabels);
+    try { Chart.register(ChartDataLabels); } catch (e) { /* ignore if already registered */ }
   }
 
   // ====== Elements ======
@@ -34,10 +36,14 @@ document.addEventListener("DOMContentLoaded", function () {
   const elPendingCount = document.getElementById("pendingCount");
   const elFailedCount = document.getElementById("failedCount");
 
+  // create placeholders for trend & forecast (will be appended once)
+  let trendDiv = null;
+  let forecastDiv = null;
+
   let ALL_PAYMENTS = [];
 
   // ====== Utilities ======
-  const fmtLKR = (n) => `LKR ${Number(n || 0).toLocaleString()}`;
+  const fmtLKR = (n) => `LKR ${Number(n || 0).toLocaleString('en-US')}`; // commas as thousand separators
   const cap = (s) =>
     s ? s.toString().replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase()) : "";
 
@@ -89,10 +95,17 @@ document.addEventListener("DOMContentLoaded", function () {
       pending = 0,
       failed = 0;
 
+    // monthMap used for trend/forecast: keys "YYYY-MM" -> sum
+    const monthMap = {};
+
     payments.forEach((p) => {
       const amt = Number(p.amount) || 0;
       total += amt;
       const d = new Date(p.payment_date);
+      if (!isNaN(d)) {
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        monthMap[key] = (monthMap[key] || 0) + amt;
+      }
       const inThisMonth = d && d.getMonth() === curMonth && d.getFullYear() === curYear;
 
       if (p.status === "completed") {
@@ -112,6 +125,58 @@ document.addEventListener("DOMContentLoaded", function () {
     elCompletedCount.textContent = completed;
     elPendingCount.textContent = pending;
     elFailedCount.textContent = failed;
+
+    // ====== Trend Analysis (current vs previous month) ======
+    if (!trendDiv) {
+      trendDiv = document.createElement("div");
+      trendDiv.style.marginTop = "8px";
+      trendDiv.style.fontSize = "13px";
+      trendDiv.style.textAlign = "center";
+      elMonthlyRevenue.parentElement.appendChild(trendDiv);
+    }
+
+    // compute previous month key reliably
+    const prevDate = new Date(curYear, curMonth - 1, 1);
+    const prevKey = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+    const curKey = `${curYear}-${String(curMonth + 1).padStart(2, '0')}`;
+
+    const prevValue = monthMap[prevKey] || 0;
+    const curValue = monthMap[curKey] || monthly; // fallback to computed monthly
+    if (prevValue > 0) {
+      const change = curValue - prevValue;
+      const perc = ((change / prevValue) * 100).toFixed(1);
+      if (change >= 0) {
+        trendDiv.innerHTML = `📈 <span style="color:green">Revenue vs last month: +${perc}%</span>`;
+      } else {
+        trendDiv.innerHTML = `📉 <span style="color:red">Revenue vs last month: ${perc}%</span>`;
+      }
+    } else {
+      trendDiv.innerHTML = `<span style="color:#666">No previous month data available</span>`;
+    }
+
+    // ====== Predictive Forecast (average of last 3 months) ======
+    if (!forecastDiv) {
+      forecastDiv = document.createElement("div");
+      forecastDiv.style.marginTop = "6px";
+      forecastDiv.style.fontSize = "13px";
+      forecastDiv.style.textAlign = "center";
+      elMonthlyRevenue.parentElement.appendChild(forecastDiv);
+    }
+
+    const monthKeys = Object.keys(monthMap).sort();
+    if (monthKeys.length >= 1) {
+      // pick last 3 existing months (sorted)
+      const last3Keys = monthKeys.slice(-3);
+      const last3Vals = last3Keys.map(k => monthMap[k] || 0);
+      if (last3Vals.length > 0) {
+        const avg = last3Vals.reduce((a, b) => a + b, 0) / last3Vals.length;
+        forecastDiv.innerHTML = `🔮 <span style="color:#007bff">Est. next month: <strong>${fmtLKR(avg.toFixed(2))}</strong></span>`;
+      } else {
+        forecastDiv.innerHTML = `<span style="color:#666">Not enough data for forecast</span>`;
+      }
+    } else {
+      forecastDiv.innerHTML = `<span style="color:#666">Not enough data for forecast</span>`;
+    }
   }
 
   // ====== Apply Filters ======
@@ -479,11 +544,15 @@ document.addEventListener("DOMContentLoaded", function () {
     return { labels, data };
   }
 
-    // Render chart to dataURL (JPEG) — ensures canvas has explicit size and white background
-    // === Helper: render chart to DataURL ===
+  // Render chart to dataURL (PNG) — ensures canvas has explicit size and white background
   async function renderChartToDataURL(config, width = 1200, height = 800) {
     if (typeof Chart === "undefined") {
       throw new Error("Chart.js not loaded. Add <script src='https://cdn.jsdelivr.net/npm/chart.js'></script>");
+    }
+
+    // register datalabels plugin if available
+    if (typeof ChartDataLabels !== "undefined") {
+      try { Chart.register(ChartDataLabels); } catch (e) { /* ignore */ }
     }
 
     return new Promise((resolve) => {
@@ -502,30 +571,56 @@ document.addEventListener("DOMContentLoaded", function () {
       cfg.options.maintainAspectRatio = false;
       cfg.options.animation = false;
 
-      // force black text
+      // force black text for legend & ticks
       cfg.options.plugins = cfg.options.plugins || {};
       if (!cfg.options.plugins.legend) cfg.options.plugins.legend = {};
-      cfg.options.plugins.legend.labels = { color: "black" };
+      cfg.options.plugins.legend.labels = Object.assign({ color: "black" }, cfg.options.plugins.legend.labels || {});
 
       if (cfg.options.scales) {
         Object.keys(cfg.options.scales).forEach(axis => {
-          cfg.options.scales[axis].ticks = { color: "black" };
+          cfg.options.scales[axis].ticks = Object.assign({ color: "black" }, cfg.options.scales[axis].ticks || {});
         });
       }
 
-      Chart.register(ChartDataLabels);
+      // If datasets don't provide colors, apply palette
+      const palette = ["#FF9999", "#66B2FF", "#99FF99", "#FFD580", "#C2A3FF", "#FFB3E6", "#B7E4C7"];
+      if (cfg.data && cfg.data.datasets) {
+        cfg.data.datasets.forEach((ds, i) => {
+          if (!ds.backgroundColor) {
+            if (cfg.type === "pie" || cfg.type === "doughnut") {
+              ds.backgroundColor = palette.slice(0, ds.data.length);
+            } else {
+              ds.backgroundColor = palette[i % palette.length];
+            }
+          }
+          if (!ds.borderColor) ds.borderColor = "#ffffff";
+        });
+      }
 
-      // create chart
-      new Chart(ctx, cfg);
+      // create chart — pass canvas element
+      // Chart accepts canvas.getContext or canvas element depending on version; supply canvas as first arg
+      try {
+        // some Chart versions want (ctx, cfg), some accept (canvas, cfg). Try ctx first, fallback to canvas.
+        let chartInstance;
+        try { chartInstance = new Chart(ctx, cfg); } catch (e) { chartInstance = new Chart(canvas, cfg); }
 
-      setTimeout(() => {
-        try {
-          resolve(canvas.toDataURL("image/png")); // PNG ensures quality + transparency
-        } catch (err) {
-          console.error("Canvas export error:", err);
-          resolve(null);
-        }
-      }, 150);
+        // small delay to ensure render
+        setTimeout(() => {
+          try {
+            const dataUrl = canvas.toDataURL("image/png");
+            // destroy chart to free memory
+            if (chartInstance && typeof chartInstance.destroy === "function") chartInstance.destroy();
+            resolve(dataUrl);
+          } catch (err) {
+            console.error("Canvas export error:", err);
+            try { if (chartInstance && typeof chartInstance.destroy === "function") chartInstance.destroy(); } catch(e){}
+            resolve(null);
+          }
+        }, 180);
+      } catch (err) {
+        console.error("Chart creation error:", err);
+        resolve(null);
+      }
     });
   }
 
@@ -542,16 +637,16 @@ document.addEventListener("DOMContentLoaded", function () {
         if (opts.charts.includes("pie")) {
           const agg = aggregateByMethod(paymentsForCharts);
           if (agg.labels.length > 0) {
-            const totalSum = agg.data.reduce((a, b) => a + b, 0);
-
+            // Prepare pie config with ChartDataLabels showing LKR and percentage
             const pieConfig = {
               type: "pie",
               data: {
                 labels: agg.labels,
                 datasets: [{
                   data: agg.data,
-                  backgroundColor: ["#FF9999", "#66B2FF", "#99FF99", "#FFD580"], // lighter colors
-                  borderColor: "#fff",
+                  // light palette; border white for slices
+                  backgroundColor: ["#FF9999", "#66B2FF", "#99FF99", "#FFD580", "#C2A3FF", "#FFB3E6"],
+                  borderColor: "#ffffff",
                   borderWidth: 2
                 }]
               },
@@ -560,15 +655,14 @@ document.addEventListener("DOMContentLoaded", function () {
                   legend: { position: "bottom", labels: { color: "#000" } },
                   datalabels: {
                     color: "#000",
-                    font: { weight: "bold", size: 14 },
+                    font: { weight: "600", size: 12 },
                     formatter: (value, ctx) => {
-                      let total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                      let percentage = (value / total * 100).toFixed(1);
-                      let formattedValue = value.toLocaleString("en-LK", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      });
-                      return `LKR ${formattedValue}\n(${percentage}%)`;
+                      const data = ctx.chart.data.datasets[0].data;
+                      const total = data.reduce((a, b) => a + b, 0) || 0;
+                      const percent = total ? ((value / total) * 100).toFixed(1) : "0.0";
+                      // format value with comma separators and two decimals
+                      const formatted = Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                      return `LKR ${formatted}\n(${percent}%)`;
                     }
                   }
                 }
@@ -577,8 +671,6 @@ document.addEventListener("DOMContentLoaded", function () {
             chartImages.pie = await renderChartToDataURL(pieConfig, 1200, 700);
           }
         }
-
-
 
         // Bar chart
         if (opts.charts.includes("bar")) {
@@ -592,14 +684,14 @@ document.addEventListener("DOMContentLoaded", function () {
                   label: "Revenue",
                   data: agg.data,
                   backgroundColor: "#66B2FF", // light blue
-                  borderColor: "#000",
+                  borderColor: "#66B2FF",
                   borderWidth: 1
                 }]
               },
               options: {
                 scales: {
                   x: { ticks: { color: "#000" } },
-                  y: { beginAtZero: true, ticks: { color: "#000" } }
+                  y: { beginAtZero: true, ticks: { color: "#000", callback: function(value){ return value; } } }
                 },
                 plugins: {
                   legend: { display: false },
@@ -607,12 +699,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     anchor: "end",
                     align: "top",
                     color: "#000",
-                    font: { weight: "bold", size: 12 },
-                    formatter: (value) =>
-                      "LKR " + value.toLocaleString("en-LK", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })
+                    font: { weight: "600", size: 12 },
+                    formatter: (value) => {
+                      return "LKR " + Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    }
                   }
                 }
               }
@@ -621,12 +711,11 @@ document.addEventListener("DOMContentLoaded", function () {
           }
         }
 
-        // Send to backend
+        // build payload (only include non-null images)
         const payload = { period: opts.period, charts: {} };
-        Object.keys(chartImages).forEach(k => {
-          if (chartImages[k]) payload.charts[k] = chartImages[k];
-        });
+        Object.keys(chartImages).forEach(k => { if (chartImages[k]) payload.charts[k] = chartImages[k]; });
 
+        // POST to server
         const res = await fetch("backend/generate_pdf.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -635,8 +724,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (!res.ok) {
           const text = await res.text();
-          console.error("Server error:", text);
-          alert("Server error while generating PDF.");
+          console.error("Server error while generating PDF:", text);
+          alert("Server error while generating PDF. See console.");
           return;
         }
 
@@ -654,7 +743,6 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   }
-
 
   // ====== INIT ======
   loadPayments();

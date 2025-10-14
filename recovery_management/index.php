@@ -12,14 +12,14 @@ $filter_date_to = isset($_GET['filter_date_to']) ? trim($_GET['filter_date_to'])
 // ---- DELIVERY DATA FOR MODAL ----
 $delivery_data = [];
 $sql = "SELECT 
-            d.delivery_code, 
-            COALESCE(p.product_name, d.product_name) AS product_name,  
-            d.quantity AS delivery_quantity, 
-            COALESCE(p.price_per_kg, (SELECT price_per_kg FROM products WHERE product_name = d.product_name LIMIT 1)) AS unit_price
-        FROM deliveries d
-        LEFT JOIN order_table o ON d.order_no = o.order_id
-        LEFT JOIN products p ON o.product_id = p.product_id
-        WHERE d.delivery_status = 'Delivered'";
+    d.delivery_code, 
+    COALESCE(p.product_name, d.product_name) AS product_name,  
+    d.quantity AS delivery_quantity, 
+    COALESCE(p.price_per_kg, (SELECT price_per_kg FROM products WHERE product_name = d.product_name LIMIT 1)) AS unit_price
+  FROM deliveries d
+  LEFT JOIN order_table o ON d.order_no = o.order_id
+  LEFT JOIN products p ON o.product_id = p.product_id
+  WHERE d.delivery_status = 'Delivered'";
 $result = $conn->query($sql);
 if ($result && $result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
@@ -55,11 +55,16 @@ $recordsResult = $conn->query($records_sql);
   <title>Recovery Management - Makgrow Impex</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     .filter-bar { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:16px; }
     .filter-bar .filter-group { display:flex; flex-direction:column; }
     .filter-bar input[type="text"], .filter-bar select, .filter-bar input[type="date"] { padding:6px 8px; }
     .filter-actions { display:flex; gap:8px; align-items:center; }
+    #reportsOverlay .modal { max-width: 700px; }
+    #reportsOverlay { z-index:99999; }
   </style>
 </head>
 <body>
@@ -74,23 +79,29 @@ $recordsResult = $conn->query($records_sql);
           <p>Track and manage product returns and rejections</p>
         </div>
         <div class="header-actions">
-          <button class="btn btn-secondary"><span class="icon"><i class="fa-regular fa-file fa-xl"></i></span>Monthly Reports</button>
+          <button class="btn btn-secondary" id="openReportsBtn">
+            <span class="icon"><i class="fa-regular fa-file fa-xl"></i></span>Monthly Reports
+          </button>
           <button class="btn btn-primary" id="openModalBtn"><span class="icon"><i class="fa-solid fa-plus fa-xl"></i></span>New Recovery</button>
         </div>
       </div>
     </header>
 
     <section class="stats-grid">
-      <div class="stat-card blue"><div class="stat-icon"><i class="fas fa-undo"></i></div>
+      <div class="stat-card blue">
+        <div class="stat-icon"><i class="fas fa-undo"></i></div>
         <div class="stat-content"><h3><?= $totalRecoveries ?></h3><p>Total Recoveries</p></div>
       </div>
-      <div class="stat-card purple"><div class="stat-icon"><i class="fas fa-cube"></i></div>
+      <div class="stat-card purple">
+        <div class="stat-icon"><i class="fas fa-cube"></i></div>
         <div class="stat-content"><h3><?= $totalItems ?></h3><p>Items Recovered</p></div>
       </div>
-      <div class="stat-card red"><div class="stat-icon"><i class="fa-solid fa-wallet"></i></div>
+      <div class="stat-card red">
+        <div class="stat-icon"><i class="fa-solid fa-wallet"></i></div>
         <div class="stat-content"><h3>LKR <?= number_format($totalImpact, 2) ?></h3><p>Financial Impact</p></div>
       </div>
-      <div class="stat-card green"><div class="stat-icon"><i class="fa-solid fa-check" style="color: #0aab07;"></i></div>
+      <div class="stat-card green">
+        <div class="stat-icon"><i class="fa-solid fa-check" style="color: #0aab07;"></i></div>
         <div class="stat-content"><h3><?= $returnedToStock ?></h3><p>Returned to Stock</p></div>
       </div>
     </section>
@@ -281,6 +292,28 @@ $recordsResult = $conn->query($records_sql);
         </table>
       </div>
     </section>
+
+     <!-- Monthly Reports Overlay -->
+    <div class="modal-overlay" id="reportsOverlay" style="display:none;">
+      <div class="modal" style="max-width:700px">
+        <div class="modal-header">
+          <h2>Monthly Recovery Report</h2>
+          <button class="close-btn" id="closeReportsBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="reportForm" style="margin-bottom:16px; display:flex; gap:6px; align-items:center;">
+            <label for="monthInput"><b>Month:</b></label>
+            <input type="month" id="monthInput" name="monthInput" max="<?= date('Y-m') ?>" value="<?= date('Y-m') ?>" required>
+            <button type="submit" class="btn btn-primary">Generate</button>
+          </form>
+          <button id="downloadPdfBtn" class="btn btn-secondary" style="margin-bottom:10px; float:right;">Download as PDF</button>
+          <div id="reportContent">
+            <!-- Chart + Table inserted by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 <script src="script.js"></script>
