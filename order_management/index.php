@@ -1,4 +1,3 @@
-<?php include '../authentication/auth.php'; ?>
 <?php
 
 define('DB_SERVER', '142.91.102.107');

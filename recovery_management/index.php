@@ -1,4 +1,3 @@
-<?php include '../authentication/auth.php'; ?>
 <?php
 include 'db.php';
 

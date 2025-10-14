@@ -36,16 +36,6 @@
         </ul>
       </div>
 
-      <?php if ($_SESSION['user_id'] === 'admin') { ?>
-      <div class="nav-section">
-        <h4>USER MANAGEMENT</h4>
-        <ul>
-          <li onclick="window.location.href='<?= $baseURL ?>authentication/user_management.php'">
-            <i class="fas fa-user"></i><span>User Management</span>
-          </li>
-        </ul>
-      </div>
-      <?php } ?>
 
       <div class="nav-section">
         <h4>ANALYTICS</h4>
