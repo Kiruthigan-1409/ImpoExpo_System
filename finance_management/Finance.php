@@ -258,7 +258,7 @@
 
         <label>
           Payment Date *
-          <input type="date" name="payment_date" required />
+          <input type="date" name="payment_date" id="payment_date" required />
         </label>
 
         <label>
