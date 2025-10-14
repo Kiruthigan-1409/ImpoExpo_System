@@ -165,4 +165,22 @@ document.addEventListener('DOMContentLoaded', () => {
   arrivalFrom.addEventListener('change', filterTable);
   arrivalTo.addEventListener('change', filterTable);
 
+  // Report Modal
+  const reportModal = document.getElementById('reportModal');
+  const reportBtn = document.querySelector('.btn-secondary'); // Assuming the first Reports button
+  const closeReportBtn = reportModal.querySelector('.close-btn');
+
+  reportBtn.addEventListener('click', () => {
+    reportModal.style.display = 'flex';
+  });
+
+  closeReportBtn.addEventListener('click', () => {
+    reportModal.style.display = 'none';
+  });
+
+  window.addEventListener('click', e => {
+    if(e.target === reportModal) reportModal.style.display = 'none';
+  });
+
+
 });
