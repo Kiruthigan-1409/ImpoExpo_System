@@ -21,6 +21,13 @@ document.addEventListener("DOMContentLoaded", function () {
   const chequeRefField = document.getElementById("chequeRefField");
   const buyerSelect = document.getElementById("buyer_id");
 
+  // ====== DATE VALIDATION (NEW) ======
+  const addDateInput = document.getElementById("payment_date");
+  const editDateInput = document.getElementById("edit_payment_date");
+  const today = new Date().toISOString().split("T")[0];
+  if (addDateInput) addDateInput.setAttribute("min", today);
+  if (editDateInput) editDateInput.setAttribute("min", today);
+
   // Filters
   const searchInput = document.getElementById("searchInput");
   const statusFilter = document.getElementById("statusFilter");
@@ -43,7 +50,7 @@ document.addEventListener("DOMContentLoaded", function () {
   let ALL_PAYMENTS = [];
 
   // ====== Utilities ======
-  const fmtLKR = (n) => `LKR ${Number(n || 0).toLocaleString('en-US')}`; // commas as thousand separators
+  const fmtLKR = (n) => `LKR ${Number(n || 0).toLocaleString('en-US')}`;
   const cap = (s) =>
     s ? s.toString().replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase()) : "";
 
@@ -55,6 +62,7 @@ document.addEventListener("DOMContentLoaded", function () {
         referenceInput.value = data.nextRef || "";
       });
   }
+
 
   // ====== Render Table Row ======
   function renderRow(row) {
@@ -744,7 +752,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // ====== INIT ======
+  // ====== INIT =====
   loadPayments();
   loadBuyers();
 });
