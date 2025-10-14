@@ -24,11 +24,7 @@
           <li data-href="delivery_management/delivery.php">
             <i class="fas fa-truck"></i><span>Delivery Management</span>
           </li>
-<<<<<<< HEAD
-          <li onclick="window.location.href='<?= $baseURL ?>suppliers_buyers_management/frontend/supplier.php'">
-=======
           <li data-href="suppliers_buyers/frontend/supplier.php">
->>>>>>> 4205b43daf7e63a0064a12cc621b7be6a34e88a6
             <i class="fas fa-users"></i><span>Suppliers & Buyers</span>
           </li>
           <li data-href="finance_management/Finance.php">
@@ -44,11 +40,7 @@
       <div class="nav-section">
         <h4>ANALYTICS</h4>
         <ul>
-<<<<<<< HEAD
-          <li onclick="window.location.href='<?= $baseURL ?>settings/system_settings.php'">
-=======
           <li data-href="setting/index.php">
->>>>>>> 4205b43daf7e63a0064a12cc621b7be6a34e88a6
             <i class="fas fa-cog"></i><span>System Settings</span>
           </li>
         </ul>
