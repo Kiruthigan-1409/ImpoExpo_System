@@ -23,7 +23,7 @@
         </div>
         <div class="header-actions">
           <button class="btn btn-secondary">
-            <span class="icon"><i class="fa-regular fa-file fa-xl"></i></span> Monthly Reports
+            <span class="icon"><i class="fa-regular fa-file fa-xl"></i></span> Reports
           </button>
           <button id="openModal" class="btn btn-primary">
             <span class="icon"><i class="fa-solid fa-plus fa-xl"></i></span> New Import
@@ -259,26 +259,29 @@
       <label>Import Reference</label>
       <input type="text" name="import_ref" id="edit_import_ref" readonly>
 
-      <label>Supplier</label>
-      <select name="supplier_id" id="edit_supplierSelect" required>
-        <option value="">-- Select Supplier --</option>
+      <select id="edit_supplier_id" name="supplier_id" required>
+        <option value="">Select Supplier</option>
         <?php
         $suppliers = $conn->query("SELECT supplier_id, suppliername FROM supplier");
-        while($s = $suppliers->fetch_assoc()){
-          echo "<option value='{$s['supplier_id']}'>{$s['suppliername']}</option>";
-        }
+        if ($suppliers && $suppliers->num_rows > 0):
+            while($s = $suppliers->fetch_assoc()):
         ?>
+            <option value="<?= $s['supplier_id'] ?>"><?= $s['suppliername'] ?></option>
+        <?php
+            endwhile;
+        else:
+        ?>
+            <option value="">No suppliers found</option>
+        <?php endif; ?>
       </select>
 
-      <label>Product</label>
-      <select name="product_id" id="edit_productSelect" required>
-        <option value="">-- Select Product --</option>
-        <?php
-        $products = $conn->query("SELECT p.product_id, p.product_name FROM products p");
-        while($p = $products->fetch_assoc()){
-          echo "<option value='{$p['product_id']}'>{$p['product_name']}</option>";
-        }
-        ?>
+      <select id="edit_product_id" name="product_id" required>
+        <option value="">Select Product</option>
+        <?php foreach($products as $product): ?>
+          <option value="<?= $product['product_id'] ?>" data-supplier="<?= $product['supplier_id'] ?>">
+            <?= $product['product_name'] ?>
+          </option>
+        <?php endforeach; ?>
       </select>
 
       <label>Quantity (kg)</label>

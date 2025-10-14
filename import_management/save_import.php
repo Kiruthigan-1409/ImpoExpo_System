@@ -1,9 +1,7 @@
 <?php
 include 'db.php';
 
-// =====================================
-// DELETE IMPORT
-// =====================================
+//delete import
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_import'])) {
     $import_id = intval($_POST['delete_import']);
     $stmt = $conn->prepare("DELETE FROM imports WHERE import_id = ?");
@@ -14,9 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_import'])) {
     exit();
 }
 
-// =====================================
-// INSERT IMPORT
-// =====================================
+//insert
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST['id'])) {
     $import_ref   = $_POST['import_ref'];
     $supplier_id  = $_POST['supplier_id'];
@@ -94,9 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST['id'])) {
     }
 }
 
-// =====================================
-// UPDATE IMPORT
-// =====================================
+//updat
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id']) && !empty($_POST['id'])) {
     $import_id   = $_POST['id'];
     $supplier_id = $_POST['supplier_id'];
@@ -107,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id']) && !empty($_POS
     $remarks     = $_POST['remarks'];
     $import_date = $_POST['import_date'];
 
-    // ========== Validation ==========
+    //validations
     if (empty($supplier_id) || empty($product_id) || empty($quantity) || empty($import_date) || empty($arrival_date) || empty($expiry_date)) {
         echo "<script>alert('All fields are required!'); window.location='import_management.php';</script>";
         exit;
@@ -125,7 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id']) && !empty($_POS
         exit;
     }
 
-    // ========== Fetch Supplier and Product Names ==========
+    //fetch supplier name and product
     $supRes = $conn->prepare("SELECT suppliername FROM supplier WHERE supplier_id = ?");
     $supRes->bind_param("i", $supplier_id);
     $supRes->execute();
@@ -138,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id']) && !empty($_POS
     $product_name = $prodRes->get_result()->fetch_assoc()['product_name'] ?? '';
     $prodRes->close();
 
-    // ========== Get Stock ID Linked to Import ==========
+    //get stock id
     $stockQ = $conn->prepare("SELECT stock_id FROM imports WHERE import_id = ?");
     $stockQ->bind_param("i", $import_id);
     $stockQ->execute();
@@ -150,7 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id']) && !empty($_POS
         exit;
     }
 
-    // ========== Update Stock ==========
+    // update stock
     $stmt_stock = $conn->prepare("UPDATE stock 
         SET quantity = ?, expiry_date = ?, arrival_date = ? 
         WHERE stock_id = ?");
@@ -158,7 +152,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id']) && !empty($_POS
     $stmt_stock->execute();
     $stmt_stock->close();
 
-    // ========== Update Imports ==========
+    //update import
     $stmt_imports = $conn->prepare("UPDATE imports 
         SET supplier_id = ?, suppliername = ?, product_id = ?, product_name = ?, import_date = ?, arrival_date = ?, expiry_date = ?, remarks = ?
         WHERE import_id = ?");
@@ -173,9 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id']) && !empty($_POS
     exit;
 }
 
-// =====================================
-// FETCH IMPORT DETAILS (for Edit Modal)
-// =====================================
+//get import details for edit function
 if (isset($_GET['action']) && $_GET['action'] === 'get' && isset($_GET['id'])) {
     $import_id = intval($_GET['id']);
     
