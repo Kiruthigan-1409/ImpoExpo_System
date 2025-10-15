@@ -236,8 +236,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Set min recovery date during Edit from option or record
     const minDate = (selectedOption && selectedOption.getAttribute("data-delivery-date")) 
-        ? selectedOption.getAttribute("data-delivery-date") 
-        : (record.delivery_actual_date || null);
+      ? selectedOption.getAttribute("data-delivery-date") 
+      : (record.delivery_actual_date || null);
     if (minDate) {
       recoveryDateInput.setAttribute("min", minDate);
       if (recoveryDateInput.value < minDate) {
@@ -270,7 +270,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // --- Monthly Report Overlay Logic (FULLY UPDATED for perfect PDF download) ---
+  // --- Top Losses Popup Logic ---
+  const openTopLossesBtn = document.getElementById('openTopLossesBtn');
+  const topLossesModal = document.getElementById('topLossesModal');
+  const closeTopLossesBtn = document.getElementById('closeTopLossesBtn');
+  if (openTopLossesBtn && topLossesModal && closeTopLossesBtn) {
+    openTopLossesBtn.onclick  = () => { topLossesModal.style.display='flex'; };
+    closeTopLossesBtn.onclick = () => { topLossesModal.style.display='none'; };
+    topLossesModal.onclick = function(e){
+      if (e.target === topLossesModal) topLossesModal.style.display='none';
+    };
+  }
+
+  // --- Monthly Report Overlay Logic ---
   const openReportsBtn = document.getElementById('openReportsBtn');
   const reportsOverlay = document.getElementById('reportsOverlay');
   const closeReportsBtn = document.getElementById('closeReportsBtn');
@@ -566,6 +578,7 @@ document.addEventListener("DOMContentLoaded", () => {
     reportEl.style.position = originalStyle.position;
     reportEl.style.background = originalStyle.background;
   };
+  
 
 
   // Provide updateDeliveryDetails globally for inline events/scripts
