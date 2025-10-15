@@ -21,7 +21,7 @@
             <p> Manage Buyer Information</p>
           </div>
           <div class="header-actions">
-            <button class="btn btn-secondary" style="background-color: #635c5c; color: aliceblue;">
+            <button class="btn btn-secondary" style="background-color: #635c5c; color: aliceblue;" id="buyerReport">
               <span class="icon">
                 <i class="fa-regular fa-file fa-xl" ></i>
               </span>
@@ -146,6 +146,12 @@
                 </ul>
               </div>
             </div>
+
+            <div class="filter-group">
+                <button class="btn btn-reset" id="resetbuyers">
+                  <i class="fa-solid fa-rotate-right"></i>
+                </button>
+          </div>
       </section>
 
       <!-- Data Table -->

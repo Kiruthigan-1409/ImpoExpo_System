@@ -46,6 +46,7 @@ $entries = count($suppliers);
 
 
       <!-- Filters -->
+<div class="summary-container">
 <section class="filters-card">
   <div class="filters-header">
     <h3>Supplier summary</h3>
@@ -99,6 +100,63 @@ $entries = count($suppliers);
     </div>
   </section>
 
+  <section class="filters-card">
+  <div class="filters-header">
+    <h3>Buyer summary</h3>
+  </div>
+  <div class="filters-body">
+    <div class="filters-left">
+      <div class="filter-group">
+        <label for="buyerfromDate">From</label>
+        <input type="date" id="buyerfromDate" placeholder="From">
+      </div>
+
+      <div class="filter-group">
+        <label for="buyertoDate">To</label>
+        <input type="date" id="buyertoDate" placeholder="To">
+      </div>
+
+      <div class="filter-group">
+        <label for="buyerentries">Entries</label>
+        <input type="number" id="buyerentries" min="1">
+      </div>
+
+    </div>
+
+    <div class="checkbox-list">
+      <label style="font-weight:bold;">Data visual</label>
+      <div class="checkbox-item">
+        <input type="checkbox" class="buyercharts" id="buyerdis" name="buyercharts[]" value="buyerdis">
+        <label for="buyerdis">Show data visual for buyer distribution across cites</label>
+      </div>
+
+      <div class="checkbox-item">
+        <input type="checkbox" class="buyercharts" id="buyerbarchart" name="buyercharts[]" value="buyerbarchart">
+        <label for="buyerbarchart">Show pie chart for product distribution according to buyer count</label>
+      </div>
+      <div class="checkbox-item">
+        <input type="checkbox" class="buyercharts" id="buyercoloumn" name="buyercharts[]" value="buyercoloumn">
+        <label for="buyercoloumn">Show coloumn chart for top 5 buyer according to revenue </label>
+      </div>
+       <label style="font-weight:bold;">Data Summary</label>
+       <div class="checkbox-item">
+        <input type="checkbox" class="buyercharts" id="b_datasummary" name="buyercharts[]" value="b_datasummary">
+        <label for="b_datasummary">Include data summary</label>
+      </div>
+    </div>
+  </div>
+ 
+
+    <div class="filters-right">
+      <button class="btn btn-pdf" id="buyerpdfbtn">
+        <i class="fa-solid fa-file-pdf"></i> PDF
+      </button>
+      <button class="btn btn-excel" id="buyerexcelbtn">
+        <i class="fa-solid fa-file-excel"></i> CSV
+      </button>
+    </div>
+  </section>
+</div>
     </main>
   </div>
 
@@ -122,9 +180,20 @@ $entries = count($suppliers);
     document.addEventListener("DOMContentLoaded", () => {
 
      
-      function validateFilters() {
+      function validatesupplierFilters() {
         const fromDate = document.getElementById("fromDate").value;
         const toDate = document.getElementById("toDate").value;
+
+        if (!fromDate || !toDate) {
+          alert("Please select both From and To dates.");
+          return false;
+        }
+        return true;
+      }
+
+      function validatebuyerFilters() {
+        const fromDate = document.getElementById("buyerfromDate").value;
+        const toDate = document.getElementById("buyertoDate").value;
 
         if (!fromDate || !toDate) {
           alert("Please select both From and To dates.");
@@ -136,7 +205,7 @@ $entries = count($suppliers);
       // PDF Export
       document.getElementById("pdfbtn").addEventListener("click", () => {
         
-         if (!validateFilters()) return;
+         if (!validatesupplierFilters()) return;
           const fromDate = document.getElementById("fromDate").value;
           const toDate = document.getElementById("toDate").value;
           const entries = document.getElementById("entries").value;
@@ -164,6 +233,38 @@ $entries = count($suppliers);
           window.location.href = "../backend/generatePDF.php?" + params.toString();
       });
 
+
+      //buyerpdf
+      document.getElementById("buyerpdfbtn").addEventListener("click", () => {
+        
+         if (!validatebuyerFilters()) return;
+          const fromDate = document.getElementById("buyerfromDate").value;
+          const toDate = document.getElementById("buyertoDate").value;
+          const entries = document.getElementById("buyerentries").value;
+
+          if (!fromDate || !toDate) {
+              alert("Please select both From and To dates.");
+              return;
+          }
+
+          const from = new Date(fromDate);
+          const to = new Date(toDate);
+
+        
+          if (to < from) {
+              alert("The 'To' date cannot be earlier than the 'From' date.");
+              return;
+          }
+
+          const selectedCharts = Array.from(document.querySelectorAll(".buyercharts:checked"))
+                                      .map(chk => chk.value);
+
+          const params = new URLSearchParams({ fromDate, toDate, entries });
+          selectedCharts.forEach(chart => params.append('buyercharts[]', chart));
+
+          window.location.href = "../backend/generatePDF buyer.php?" + params.toString();
+      });
+
    
       document.getElementById("excelbtn").addEventListener("click", () => {
         if (!validateFilters()) return;
@@ -174,6 +275,18 @@ $entries = count($suppliers);
 
         const params = new URLSearchParams({ fromDate, toDate, entries });
         window.location.href = "../backend/generateExceltopsupplier.php?" + params.toString();
+      });
+
+      const cards = document.querySelectorAll('.filters-card');
+
+      cards.forEach(card => {
+          card.addEventListener('click', () => {
+             
+              cards.forEach(c => c.classList.remove('active'));
+
+              
+              card.classList.add('active');
+          });
       });
 
 

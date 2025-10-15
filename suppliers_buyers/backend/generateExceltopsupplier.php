@@ -10,7 +10,7 @@ $suppliers = getSuppliers($fromDate, $toDate, $entries);
 
 
 header('Content-Type: text/csv');
-header('Content-Disposition: attachment; filename="TopSuppliers.csv"');
+header('Content-Disposition: attachment; filename="Supplier summary.csv"');
 
 
 $output = fopen('php://output', 'w');
