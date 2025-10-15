@@ -1,4 +1,5 @@
 <?php
+session_start();
 // Connect DB
 include 'db.php';
 
@@ -15,6 +16,14 @@ while ($row = $zero_stock_res->fetch_assoc()) {
 
 // 2. Handle form submits for add/update/delete product (safe deletes)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    if ($_POST['action'] === 'update_threshold') {
+        $threshold = intval($_POST['low_stock_threshold']);
+        $_SESSION['low_stock_threshold'] = $threshold; // <-- Set in session
+        $low_stock_threshold = $threshold;
+        $success_message = "Low stock threshold updated to $threshold!";
+    }
+
     if ($_POST['action'] === 'add_product') {
         $name = $_POST['product_name'];
         $price = floatval($_POST['price_per_kg']);
@@ -61,6 +70,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $success_message = "Low stock threshold updated to $threshold!";
     }
 }
+// 3. Always set from session or default
+$low_stock_threshold = isset($_SESSION['low_stock_threshold']) ? intval($_SESSION['low_stock_threshold']) : 25;
 
 // Get products list
 $products = $conn->query("SELECT * FROM products ORDER BY product_name ASC")->fetch_all(MYSQLI_ASSOC);
