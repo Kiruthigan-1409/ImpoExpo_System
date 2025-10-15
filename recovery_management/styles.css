@@ -618,6 +618,36 @@ body {
 #reportsOverlay {
   z-index: 99999;
 }
+#pdfReportContent {
+  max-height: unset !important;
+  overflow: visible !important;
+}
+#pdfReportContent {
+  font-family: "Segoe UI", Roboto, sans-serif;
+  color: #333;
+}
+
+#pdfReportContent table th,
+#pdfReportContent table td {
+  border: 1px solid #ddd;
+  text-align: center;
+  font-size: 14px;
+}
+
+#pdfReportContent table tbody tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+#pdfReportContent h3 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+canvas {
+  width: 100% !important;
+  height: auto !important;
+  max-height: 260px !important;
+}
 
 
 /* Responsive Design */
