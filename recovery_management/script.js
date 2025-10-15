@@ -270,22 +270,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // --- Monthly Report Overlay Logic (complete, with chart rendering) ---
+  // --- Monthly Report Overlay Logic (FULLY UPDATED for perfect PDF download) ---
   const openReportsBtn = document.getElementById('openReportsBtn');
   const reportsOverlay = document.getElementById('reportsOverlay');
   const closeReportsBtn = document.getElementById('closeReportsBtn');
   const reportForm = document.getElementById('reportForm');
-  const reportContent = document.getElementById('reportContent');
   const pdfReportContent = document.getElementById('pdfReportContent');
-  let reportChart;
+  let reportCharts = [];
 
   openReportsBtn.onclick = () => {
     reportsOverlay.style.display = "flex";
-    pdfReportContent.innerHTML = '<div style="padding:1em;text-align:center;">Select a month and generate!</div>';
+    pdfReportContent.innerHTML =
+      '<div style="padding:1em;text-align:center;">Select a month and generate!</div>';
   };
+
   closeReportsBtn.onclick = () => {
     reportsOverlay.style.display = "none";
-    if (window.reportCharts) window.reportCharts.forEach((c) => c.destroy());
+    if (reportCharts && reportCharts.length)
+      reportCharts.forEach(c => c && c.destroy && c.destroy());
   };
 
   reportForm.onsubmit = function (e) {
@@ -293,8 +295,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const month = document.getElementById("monthInput").value;
     pdfReportContent.innerHTML = "Loading...";
     fetch(`get_monthly_report.php?month=${month}`)
-      .then((res) => res.json())
-      .then((res) => {
+      .then(res => res.json())
+      .then(res => {
         if (!res.success) {
           pdfReportContent.innerHTML = "No data for this month.";
           return;
@@ -309,12 +311,12 @@ document.addEventListener("DOMContentLoaded", () => {
           <canvas id="monthlyTrendBar" width="600" height="200"></canvas>
           <div style="display:flex; gap:28px; flex-wrap:wrap; margin-bottom:26px">
             <div style="background:#f7fafb; border-radius:10px; min-width:175px; padding:1em;">
-              <h2 style="margin:0;color:#4CAF50;">${res.returned_sum || 0}</h2>
+              <h2 style="margin:0;color:#4CAF50;">${res.returned_sum ?? 0}</h2>
               <div style="color:#7e7;font-weight:bold;">Returned to Stock</div>
               <div class="subkpi">LKR ${parseFloat(res.returned_impact).toLocaleString(undefined,{minimumFractionDigits:2})}</div>
             </div>
             <div style="background:#fff3f3; border-radius:10px; min-width:175px; padding:1em;">
-              <h2 style="margin:0;color:#ef5350;">${res.disposed_sum || 0}</h2>
+              <h2 style="margin:0;color:#ef5350;">${res.disposed_sum ?? 0}</h2>
               <div style="color:#e57373;font-weight:bold;">Disposed (Written Off)</div>
               <div class="subkpi">LKR ${parseFloat(res.disposed_impact).toLocaleString(undefined,{minimumFractionDigits:2})}</div>
             </div>
@@ -329,13 +331,27 @@ document.addEventListener("DOMContentLoaded", () => {
               <div style="color:#aaa;font-size: 0.92em">of all recovered stock</div>
             </div>
           </div>
-          <div style="display: flex; flex-wrap: wrap; gap: 32px;">
-            <div><canvas id="actionPie" width="230" height="230"></canvas><div style="text-align:center;font-weight:bold;color:#444">Returned vs Disposed (Qty)</div></div>
-            <div><canvas id="impactBar" height="230" width="230"></canvas><div style="text-align:center;font-weight:bold;color:#444">Financial Impact by Action</div></div>
-            <div><canvas id="prodBar" height="230" width="230"></canvas><div style="text-align:center;font-weight:bold;color:#444">Product Return/Disposal Split</div></div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 50px; margin-top: 30px;">
+            <!-- Pie chart on top -->
+            <div style="text-align: center;margin-top: 220px;">
+              <canvas id="actionPie" width="300" height="300"></canvas>
+              <div style="font-weight: bold; color: #444; margin-top: 6px;">Returned vs Disposed (Qty)</div>
+            </div>
+
+            <!-- Two bar charts side by side -->
+            <div style="display: flex; justify-content: center; gap: 40px; flex-wrap: wrap;">
+              <div style="text-align:center;margin-bottom: 40px;">
+                <canvas id="impactBar" width="280" height="230"></canvas>
+                <div style="font-weight:bold;color:#444;margin-top:4px;">Financial Impact by Action</div>
+              </div>
+              <div style="text-align:center;margin-top: 30px;">
+                <canvas id="prodBar" width="280" height="230"></canvas>
+                <div style="font-weight:bold;color:#444;margin-top:4px;">Product Return/Disposal Split</div>
+              </div>
+            </div>
           </div>
           <h3 style="margin-top:2em;margin-bottom:.5em; color:#204289;">Detailed Product-wise Flow</h3>
-          <table class="data-table" style="width:100%;margin-bottom:1em;">
+          <table class="data-table" style="width:100%;margin-bottom:0;margin-top:1em">
             <thead>
               <tr>
                 <th>Product</th>
@@ -351,26 +367,32 @@ document.addEventListener("DOMContentLoaded", () => {
                   (row) => `
                 <tr>
                   <td>${row.product}</td>
-                  <td style="background:#f6fffa;color:#278a5c;">${row.returned || 0}</td>
-                  <td style="background:#fff6f7;color:#e94040;">${row.disposed || 0}</td>
-                  <td style="background:#f6fffa;color:#278a5c;">LKR ${parseFloat(row.return_impact).toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                  })}</td>
-                  <td style="background:#fff6f7;color:#c62c2e;">LKR ${parseFloat(row.dispose_impact).toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                  })}</td>
+                  <td style="background:#f6fffa;color:#278a5c;">${row.returned ?? 0}</td>
+                  <td style="background:#fff6f7;color:#e94040;">${row.disposed ?? 0}</td>
+                  <td style="background:#f6fffa;color:#278a5c;">LKR ${parseFloat(row.return_impact).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                  <td style="background:#fff6f7;color:#c62c2e;">LKR ${parseFloat(row.dispose_impact).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                 </tr>
               `
-                )
-                .join("")}
+                ).join("")}
             </tbody>
+            <tfoot>
+              <tr>
+                <th colspan="3" style="text-align:right;">Total:</th>
+                <th style="color:#288943;">LKR ${parseFloat(res.returned_impact).toLocaleString(undefined, { minimumFractionDigits: 2 })}</th>
+                <th style="color:#c62c2e;">LKR ${parseFloat(res.disposed_impact).toLocaleString(undefined, { minimumFractionDigits: 2 })}</th>
+              </tr>
+            </tfoot>
           </table>
-          <div style="color:#888;padding-bottom:10px;text-align:right;"><small>Note: Red numbers = business loss; Green = cost recovery.</small></div>
+          <div style="color:#888;padding-bottom:10px;text-align:right;">
+            <small>Note: Red numbers = business loss; Green = cost recovery.</small>
+          </div>
         `;
 
-        // Chart.js rendering (must use canvases inside pdfReportContent!)
+        // Draw charts (AFTER content is rendered!)
+        if(reportCharts && reportCharts.length) reportCharts.forEach(c => c && c.destroy && c.destroy());
+        reportCharts = [];
         const monthlyTrendBarCtx = document.getElementById("monthlyTrendBar").getContext("2d");
-        let monthlyTrendBar = new Chart(monthlyTrendBarCtx, {
+        reportCharts.push(new Chart(monthlyTrendBarCtx, {
           type: "bar",
           data: {
             labels: res.impact_labels,
@@ -399,10 +421,11 @@ document.addEventListener("DOMContentLoaded", () => {
             },
             interaction: { mode: "index", intersect: false }
           }
-        });
+        }));
 
+        // Pie chart
         const pieCtx = document.getElementById("actionPie").getContext("2d");
-        let pieChart = new Chart(pieCtx, {
+        reportCharts.push(new Chart(pieCtx, {
           type: "pie",
           data: {
             labels: ["Returned", "Disposed"],
@@ -419,10 +442,11 @@ document.addEventListener("DOMContentLoaded", () => {
               title: { display: false },
             },
           },
-        });
+        }));
 
+        // Impact bar
         const impactCtx = document.getElementById("impactBar").getContext("2d");
-        let impactChart = new Chart(impactCtx, {
+        reportCharts.push(new Chart(impactCtx, {
           type: "bar",
           data: {
             labels: res.action_data.map((r) => r.action_taken),
@@ -434,8 +458,8 @@ document.addEventListener("DOMContentLoaded", () => {
                   r.action_taken.toLowerCase() == "disposed"
                     ? "#f25460"
                     : r.action_taken.toLowerCase() == "returned"
-                      ? "#49c793"
-                      : "#b0a6f6"
+                    ? "#49c793"
+                    : "#b0a6f6"
                 ),
               },
             ],
@@ -447,10 +471,11 @@ document.addEventListener("DOMContentLoaded", () => {
             },
             scales: { y: { beginAtZero: true } },
           },
-        });
+        }));
 
+        // Product bar
         const prodCtx = document.getElementById("prodBar").getContext("2d");
-        let prodChart = new Chart(prodCtx, {
+        reportCharts.push(new Chart(prodCtx, {
           type: "bar",
           data: {
             labels: res.product_breakdown.map((r) => r.product),
@@ -474,9 +499,8 @@ document.addEventListener("DOMContentLoaded", () => {
             },
             scales: { y: { beginAtZero: true } },
           },
-        });
+        }));
 
-        window.reportCharts = [monthlyTrendBar, pieChart, impactChart, prodChart];
       })
       .catch((err) => {
         pdfReportContent.innerHTML =
@@ -484,27 +508,67 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   };
 
-  document.getElementById("downloadPdfBtn").onclick = function () {
-    // Only the PDF report content (not buttons/forms)
-    html2canvas(document.getElementById('pdfReportContent'), {
-      backgroundColor: '#fff',
-      scale: 2,
-      useCORS: true
-    }).then(canvas => {
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new window.jspdf.jsPDF({
-        orientation: 'p',
-        unit: 'mm',
-        format: 'a4'
-      });
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const imgProps = pdf.getImageProperties(imgData);
-      const pdfWidth = pageWidth - 16;
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-      pdf.addImage(imgData, 'PNG', 8, 10, pdfWidth, pdfHeight);
-      pdf.save('Monthly_Report.pdf');
+  document.getElementById("downloadPdfBtn").onclick = async function () {
+    const reportEl = document.getElementById("pdfReportContent");
+
+    // Temporarily flatten layout
+    const originalStyle = {
+      transform: reportEl.style.transform,
+      position: reportEl.style.position,
+      background: reportEl.style.background
+    };
+    reportEl.style.transform = "none";
+    reportEl.style.position = "static";
+    reportEl.style.background = "#fff";
+
+    await new Promise(r => setTimeout(r, 200));
+
+    const canvas = await html2canvas(reportEl, {
+      backgroundColor: "#fff",
+      scale: 3,
+      useCORS: true,
+      windowWidth: reportEl.scrollWidth,
+      windowHeight: reportEl.scrollHeight
     });
+
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new window.jspdf.jsPDF("p", "mm", "a4");
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = pageWidth - 20;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    // if report fits one page, just center it
+    if (imgHeight < pageHeight - 20) {
+      const y = (pageHeight - imgHeight) / 2;
+      pdf.addImage(imgData, "PNG", 10, y, imgWidth, imgHeight);
+    } else {
+      // multi-page support (smart break)
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, "PNG", 10, position + 10, imgWidth, imgHeight);
+      heightLeft -= pageHeight - 20;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight + 10;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight - 20;
+      }
+    }
+
+    pdf.save("Monthly_Report.pdf");
+
+    // restore styles
+    reportEl.style.transform = originalStyle.transform;
+    reportEl.style.position = originalStyle.position;
+    reportEl.style.background = originalStyle.background;
   };
 
+
+  // Provide updateDeliveryDetails globally for inline events/scripts
   window.updateDeliveryDetails = updateDeliveryDetails;
+
 });

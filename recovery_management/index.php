@@ -296,6 +296,7 @@ $recordsResult = $conn->query($records_sql);
     </section>
 
      <!-- Monthly Reports Overlay -->
+    <!-- Monthly Reports Overlay -->
     <div class="modal-overlay" id="reportsOverlay" style="display:none;">
       <div class="modal" style="max-width:700px">
         <div class="modal-header">
@@ -308,8 +309,10 @@ $recordsResult = $conn->query($records_sql);
             <input type="month" id="monthInput" name="monthInput" max="<?= date('Y-m') ?>" value="<?= date('Y-m') ?>" required>
             <button type="submit" class="btn btn-primary">Generate</button>
           </form>
-          <button id="downloadPdfBtn" class="btn btn-secondary" style="margin-bottom:10px; float:right;">Download as PDF</button>
-          <div id="reportContent">
+          <button id="downloadPdfBtn" class="btn btn-secondary" style="margin-bottom:10px; float:right;">
+            Download as PDF
+          </button>
+          <div id="pdfReportContent">
             <!-- Chart + Table inserted by JS -->
             <!-- Ensure IDs and explicit size! -->
             <h3 style="margin-bottom:0.3em; color:#204289;">Monthly Financial Impact Trend</h3>

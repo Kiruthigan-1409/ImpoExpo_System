@@ -124,6 +124,4 @@ echo json_encode([
     "month_name" => date('F Y', strtotime($month.'-01')),
     "prev_month_name" => date('F Y', strtotime($prev_month.'-01'))
 ]);
-
-$conn->close();
 ?>
