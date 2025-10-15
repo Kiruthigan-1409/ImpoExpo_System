@@ -1,13 +1,6 @@
 <?php
 // Database connection
-define('DB_SERVER', '142.91.102.107');
-define('DB_USER', 'sysadmin_sliitppa25');
-define('DB_PASS', ':%ngWE6;?*wm$Qy|');
-define('DB_NAME', 'sysadmin_sliitppa25');
-
-$conn = mysqli_connect(DB_SERVER, DB_USER, DB_PASS, DB_NAME);
-if (!$conn) { die("Connection failed: " . mysqli_connect_error()); }
-
+include 'db.php';
 $order_id = $_POST['order_id'];
 $product_id = $_POST['product_id'];
 
@@ -68,7 +61,6 @@ if ($remaining_needed > 0) {
 // Deduct stock and delete if quantity hits 0
 foreach ($stocks_to_deduct as $stock_id => $deduct_qty) {
     $conn->query("UPDATE stock SET quantity = quantity - $deduct_qty WHERE stock_id = $stock_id");
-    $conn->query("DELETE FROM stock WHERE stock_id = $stock_id AND quantity <= 0");
 }
 
 // Mark order as done and set confirmations
