@@ -1,3 +1,4 @@
+<?php include '../../authentication/auth.php'; ?>
 <?php
 require "../backend/fetchsuppliers.php";
 

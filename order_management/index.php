@@ -1,3 +1,4 @@
+<?php include '../authentication/auth.php'; ?>
 <?php
 include 'db.php';
 $result = $conn->query("SELECT order_id FROM order_table ORDER BY order_placed_date DESC, order_id DESC LIMIT 1");

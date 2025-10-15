@@ -12,30 +12,40 @@
       <div class="nav-section">
         <h4>OPERATIONS</h4>
         <ul>
-          <li data-href="dashboard/dashboard.php">
+          <li onclick="window.location.href='<?= $baseURL ?>dashboard.php'">
             <i class="fas fa-chart-line"></i><span>Dashboard</span>
           </li>
-          <li data-href="import_management/import_management.php">
+          <li onclick="window.location.href='<?= $baseURL ?>import_management/import_management.php'">
             <i class="fas fa-download"></i><span>Import Management</span>
           </li>
-          <li data-href="order_management/index.php">
+          <li onclick="window.location.href='<?= $baseURL ?>order_management/index.php'">
             <i class="fas fa-boxes"></i><span>Order Management</span>
           </li>
-          <li data-href="delivery_management/delivery.php">
+          <li onclick="window.location.href='<?= $baseURL ?>delivery_management/delivery.php'">
             <i class="fas fa-truck"></i><span>Delivery Management</span>
           </li>
-          <li data-href="suppliers_buyers/frontend/supplier.php">
+          <li onclick="window.location.href='<?= $baseURL ?>suppliers_buyers_management/frontend/supplier.php'">
             <i class="fas fa-users"></i><span>Suppliers & Buyers</span>
           </li>
-          <li data-href="finance_management/Finance.php">
+          <li onclick="window.location.href='<?= $baseURL ?>finance_management/Finance.php'">
             <i class="fas fa-dollar-sign"></i><span>Finance & Payments</span>
           </li>
-          <li data-href="recovery_management/index.php">
+          <li onclick="window.location.href='<?= $baseURL ?>recovery_management/index.php'">
             <i class="fas fa-undo"></i><span>Recovery Management</span>
           </li>
         </ul>
       </div>
 
+      <?php if ($_SESSION['user_id'] === 'admin') { ?>
+      <div class="nav-section">
+        <h4>USER MANAGEMENT</h4>
+        <ul>
+          <li onclick="window.location.href='<?= $baseURL ?>authentication/user_management.php'">
+            <i class="fas fa-user"></i><span>User Management</span>
+          </li>
+        </ul>
+      </div>
+      <?php } ?>
 
       <div class="nav-section">
         <h4>ANALYTICS</h4>

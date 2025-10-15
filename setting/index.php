@@ -1,3 +1,4 @@
+<<?php include '../authentication/auth.php'; ?>
 <?php
 session_start();
 // Connect DB
