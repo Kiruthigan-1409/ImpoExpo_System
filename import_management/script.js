@@ -1,81 +1,73 @@
+// Register Chart.js datalabels plugin globally
+Chart.register(ChartDataLabels);
+
 document.addEventListener('DOMContentLoaded', () => {
-  // add imports
+  // --- Add Import Modal ---
   const supplierSelect = document.getElementById('supplierSelect');
   const productSelect = document.getElementById('productSelect');
   const productNameInput = document.getElementById('productName');
   const productPriceInput = document.getElementById('productPrice');
   const addImportForm = document.getElementById('addImportForm');
-
-  // Modal Handling
   const importModal = document.getElementById('importModal');
   const openBtn = document.getElementById('openModal');
-  const closeBtn = document.querySelector('.close-btn');
+  const closeBtn = importModal.querySelector('.close-btn');
   const cancelBtn = document.getElementById('cancelBtn');
 
-  const editModal = document.getElementById('editImportModal');
-  const closeEditBtn = editModal.querySelector('.close-btn');
-  const cancelEditBtn = document.getElementById('cancelEditBtn');
-
-  openBtn.addEventListener('click', () => {
-    importModal.style.display = 'flex'; 
-  });
+  openBtn.addEventListener('click', () => importModal.style.display = 'flex');
   closeBtn.addEventListener('click', () => importModal.style.display = 'none');
   cancelBtn.addEventListener('click', () => importModal.style.display = 'none');
 
-  closeEditBtn.addEventListener('click', () => editModal.style.display = 'none');
-  cancelEditBtn.addEventListener('click', () => editModal.style.display = 'none');
-
-  window.addEventListener('click', e => {
-    if (e.target === importModal) importModal.style.display = 'none';
-    if (e.target === editModal) editModal.style.display = 'none';
-  });
-
-  // Filter Products by Supplier (Add Modal)
   supplierSelect.addEventListener('change', () => {
     const supplierId = supplierSelect.value;
-
     Array.from(productSelect.options).forEach(option => {
-      if (!option.value) return; // skip placeholder
+      if (!option.value) return;
       option.style.display = option.dataset.supplier === supplierId ? '' : 'none';
     });
-
     productSelect.value = '';
     productNameInput.value = '';
     productPriceInput.value = '';
   });
 
-  // Auto-fill Product Info (Add Modal)
   productSelect.addEventListener('change', () => {
-    const selectedOption = productSelect.options[productSelect.selectedIndex];
-    productNameInput.value = selectedOption.dataset.name || '';
-    productPriceInput.value = selectedOption.dataset.price || '';
+    const selected = productSelect.options[productSelect.selectedIndex];
+    productNameInput.value = selected.dataset.name || '';
+    productPriceInput.value = selected.dataset.price || '';
   });
 
-  // Add Import Form Validation
   addImportForm.addEventListener('submit', (e) => {
     const quantity = addImportForm.quantity.value.trim();
     const importDate = addImportForm.import_date.value;
     const arrivalDate = addImportForm.arrival_date.value;
     const expiryDate = addImportForm.expiry.value;
 
-    if (!supplierSelect.value) { alert("Please select a supplier."); e.preventDefault(); return; }
-    if (!productSelect.value) { alert("Please select a product."); e.preventDefault(); return; }
-    if (!quantity || isNaN(quantity) || quantity <= 0) { alert("Quantity must be greater than 0."); e.preventDefault(); return; }
-    if (new Date(arrivalDate) < new Date(importDate)) { alert("Arrival date cannot be before import date."); e.preventDefault(); return; }
-    if (new Date(expiryDate) <= new Date(arrivalDate)) { alert("Expiry date must be after arrival date."); e.preventDefault(); return; }
+    if (!supplierSelect.value) return alert('Please select a supplier.'), e.preventDefault();
+    if (!productSelect.value) return alert('Please select a product.'), e.preventDefault();
+    if (!quantity || isNaN(quantity) || quantity <= 0) return alert('Quantity must be greater than 0.'), e.preventDefault();
+    if (new Date(arrivalDate) < new Date(importDate)) return alert('Arrival date cannot be before import date.'), e.preventDefault();
+    if (new Date(expiryDate) <= new Date(arrivalDate)) return alert('Expiry date must be after arrival date.'), e.preventDefault();
   });
 
-  // Edit Import Modal Opening / Filling
+  // --- Edit Import Modal ---
+  const editModal = document.getElementById('editImportModal');
+  const closeEditBtn = editModal.querySelector('.close-btn');
+  const cancelEditBtn = document.getElementById('cancelEditBtn');
+
+  closeEditBtn.addEventListener('click', () => editModal.style.display = 'none');
+  cancelEditBtn.addEventListener('click', () => editModal.style.display = 'none');
+
+  window.addEventListener('click', (e) => {
+    if (e.target === importModal) importModal.style.display = 'none';
+    if (e.target === editModal) editModal.style.display = 'none';
+  });
+
   document.querySelectorAll('.action-btn.edit').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.preventDefault();
       const form = btn.closest('form');
       const importId = form.querySelector("input[name='edit']").value;
-
-      const response = await fetch('save_import.php?action=get&id=' + importId);
-      const data = await response.json();
-
-      if (!data.success) { alert('Error fetching import for edit.'); return; }
+      const res = await fetch('save_import.php?action=get&id=' + importId);
+      const data = await res.json();
+      if (!data.success) return alert('Error fetching import for edit.');
 
       const imp = data.import;
       const editSupplierSelect = document.getElementById('edit_supplier_id');
@@ -84,13 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('edit_update_import').value = imp.import_id;
       document.getElementById('edit_import_ref').value = imp.import_ref;
       editSupplierSelect.value = imp.supplier_id;
-
-      // Trigger change to filter products based on supplier
       editSupplierSelect.dispatchEvent(new Event('change'));
-
-      // Pre-select product after filtering
       editProductSelect.value = imp.product_id;
-
       document.getElementById('edit_quantity').value = imp.quantity;
       document.getElementById('edit_import_date').value = imp.import_date;
       document.getElementById('edit_arrival_date').value = imp.stock_arrival;
@@ -101,22 +88,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Filter Products by Supplier (Edit Modal)
   const editSupplierSelect = document.getElementById('edit_supplier_id');
   const editProductSelect = document.getElementById('edit_product_id');
-
-  editSupplierSelect.addEventListener('change', () => {
-    const supplierId = editSupplierSelect.value;
-
-    Array.from(editProductSelect.options).forEach(option => {
-      if (!option.value) return;
-      option.style.display = option.dataset.supplier === supplierId ? '' : 'none';
+  if (editSupplierSelect && editProductSelect) {
+    editSupplierSelect.addEventListener('change', () => {
+      const supplierId = editSupplierSelect.value;
+      Array.from(editProductSelect.options).forEach(option => {
+        if (!option.value) return;
+        option.style.display = option.dataset.supplier === supplierId ? '' : 'none';
+      });
+      editProductSelect.value = '';
     });
+  }
 
-    editProductSelect.value = '';
-  });
-
-  //search and filters
+  // --- Table Filters ---
   const searchInput = document.getElementById('searchInput');
   const productFilter = document.getElementById('productFilter');
   const supplierFilter = document.getElementById('supplierFilter');
@@ -125,90 +110,450 @@ document.addEventListener('DOMContentLoaded', () => {
   const dataTable = document.querySelector('.data-table tbody');
 
   function filterTable() {
-    const searchText = searchInput.value.toLowerCase();
-    const productText = productFilter.value.toLowerCase();
-    const supplierText = supplierFilter.value.toLowerCase();
-    const fromDate = arrivalFrom.value ? new Date(arrivalFrom.value) : null;
-    const toDate = arrivalTo.value ? new Date(arrivalTo.value) : null;
+    const s = searchInput.value.toLowerCase();
+    const pf = productFilter.value.toLowerCase();
+    const sf = supplierFilter.value.toLowerCase();
+    const from = arrivalFrom.value ? new Date(arrivalFrom.value) : null;
+    const to = arrivalTo.value ? new Date(arrivalTo.value) : null;
 
     Array.from(dataTable.rows).forEach(row => {
-      const reference = row.cells[0].textContent.toLowerCase();
+      const ref = row.cells[0].textContent.toLowerCase();
       const supplier = row.cells[1].textContent.toLowerCase();
       const product = row.cells[2].textContent.toLowerCase();
-      const arrivalDate = new Date(row.cells[5].textContent);
-
-      const matchesSearch = reference.includes(searchText);
-      const matchesProduct = !productText || product.includes(productText);
-      const matchesSupplier = !supplierText || supplier.includes(supplierText);
-      const matchesDate = (!fromDate || arrivalDate >= fromDate) && (!toDate || arrivalDate <= toDate);
-
-      row.style.display = (matchesSearch && matchesProduct && matchesSupplier && matchesDate) ? '' : 'none';
+      const arrival = new Date(row.cells[5].textContent);
+      const show =
+        ref.includes(s) &&
+        (!pf || product.includes(pf)) &&
+        (!sf || supplier.includes(sf)) &&
+        (!from || arrival >= from) &&
+        (!to || arrival <= to);
+      row.style.display = show ? '' : 'none';
     });
   }
 
-  const refreshBtn = document.getElementById('refreshBtn');
-  refreshBtn.addEventListener('click', () => {
-    searchInput.value = '';
-    productFilter.value = '';
-    supplierFilter.value = '';
-    arrivalFrom.value = '';
-    arrivalTo.value = '';
-
+  document.getElementById('refreshBtn').addEventListener('click', () => {
+    searchInput.value = productFilter.value = supplierFilter.value = arrivalFrom.value = arrivalTo.value = '';
     Array.from(dataTable.rows).forEach(row => row.style.display = '');
-    const noDataRow = document.getElementById('noDataRow');
-    if (noDataRow) noDataRow.remove();
   });
 
-  searchInput.addEventListener('input', filterTable);
-  productFilter.addEventListener('change', filterTable);
-  supplierFilter.addEventListener('change', filterTable);
-  arrivalFrom.addEventListener('change', filterTable);
-  arrivalTo.addEventListener('change', filterTable);
+  [searchInput, productFilter, supplierFilter, arrivalFrom, arrivalTo].forEach(el => {
+    if (el) el.addEventListener('input', filterTable);
+  });
 
-  // Report Modal
+  // --- Monthly Report Modal & Charts ---
+  const reportMonth = document.getElementById('reportMonth');
+  const reportPlaceholder = document.querySelector('.report-placeholder');
+  const downloadBtn = document.getElementById('downloadPdfBtn');
   const reportModal = document.getElementById('reportModal');
-  const reportBtn = document.querySelector('.btn-secondary'); // Assuming the first Reports button
-  const closeReportBtn = reportModal.querySelector('.close-btn');
+  const openReportBtn = document.getElementById('openReportModal');
+  const reportCloseBtn = reportModal.querySelector('.close-btn');
+  let charts = [];
 
-  reportBtn.addEventListener('click', () => {
-    reportModal.style.display = 'flex';
-  });
+  // Style month selector container & add refresh button if missing
+  const dateRangeSection = reportModal.querySelector('.report-date-range');
+  dateRangeSection.style.display = 'flex';
+  dateRangeSection.style.justifyContent = 'center';
+  dateRangeSection.style.alignItems = 'center';
+  dateRangeSection.style.width = "100%";
 
-  closeReportBtn.addEventListener('click', () => {
-    reportModal.style.display = 'none';
-  });
+  let monthRefreshBtn = document.getElementById('monthResetBtn');
+  if (!monthRefreshBtn) {
+    monthRefreshBtn = document.createElement('button');
+    monthRefreshBtn.id = 'monthResetBtn';
+    monthRefreshBtn.title = 'Clear month';
+    monthRefreshBtn.style.marginLeft = '14px';
+    monthRefreshBtn.style.border = 'none';
+    monthRefreshBtn.style.background = 'none';
+    monthRefreshBtn.style.cursor = 'pointer';
+    monthRefreshBtn.style.fontSize = '21px';
+    monthRefreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+    dateRangeSection.querySelector('.date-input').appendChild(monthRefreshBtn);
+  }
 
+  openReportBtn.addEventListener('click', () => reportModal.style.display = 'flex');
+  reportCloseBtn.addEventListener('click', () => reportModal.style.display = 'none');
   window.addEventListener('click', e => {
-    if(e.target === reportModal) reportModal.style.display = 'none';
+    if (e.target === reportModal) reportModal.style.display = 'none';
   });
 
+  monthRefreshBtn.addEventListener('click', () => {
+    reportMonth.value = '';
+    reportPlaceholder.innerHTML = '<p>Select date range!</p>';
+    downloadBtn.disabled = true;
+    charts.forEach(c => c.destroy());
+    charts = [];
+  });
 
-  document.getElementById('generateReportBtn').addEventListener('click', () => {
-    const start = document.getElementById('reportFrom').value;
-    const end   = document.getElementById('reportTo').value;
+  function setupContainers() {
+    if (!document.getElementById('chartsContainer')) {
+      const container = document.createElement('div');
+      container.id = 'chartsContainer';
+      container.style.display = 'grid';
+      container.style.gap = '18px';
+      container.style.marginTop = '16px';
+      container.style.gridTemplateColumns = '1fr 1fr';
+      container.style.maxWidth = '1100px';
+      container.style.margin = '16px auto';
 
-    if(!start || !end) return alert("Select both dates!");
+      reportPlaceholder.innerHTML = '';
+      reportPlaceholder.appendChild(container);
 
-    fetch('report_api.php', {
+      // Line Chart container (full width)
+      const lineDiv = document.createElement('div');
+      lineDiv.style.gridColumn = '1 / span 2';
+      lineDiv.style.background = '#fff';
+      lineDiv.style.padding = '14px';
+      lineDiv.style.borderRadius = '8px';
+      lineDiv.style.boxShadow = '0px 2px 6px rgba(0,0,0,0.05)';
+      const hLine = document.createElement('h4');
+      hLine.textContent = 'Total Imports Over Time';
+      lineDiv.appendChild(hLine);
+      const canvasLine = document.createElement('canvas');
+      canvasLine.id = 'lineImportsChart';
+      canvasLine.height = 85;
+      lineDiv.appendChild(canvasLine);
+      container.appendChild(lineDiv);
+
+      // Pie Chart containers side by side
+      function createPieContainer(id, title) {
+        const div = document.createElement('div');
+        div.style.background = '#fff';
+        div.style.padding = '14px';
+        div.style.borderRadius = '8px';
+        const h = document.createElement('h4');
+        h.textContent = title;
+        div.appendChild(h);
+        const canvas = document.createElement('canvas');
+        canvas.id = id;
+        canvas.height = 110;
+        div.appendChild(canvas);
+        return div;
+      }
+
+      const pieProductDiv = createPieContainer('pieProductChart', 'Product Share');
+      const pieSupplierDiv = createPieContainer('pieSupplierChart', 'Supplier Share');
+      container.appendChild(pieProductDiv);
+      container.appendChild(pieSupplierDiv);
+
+      // Bar Chart containers side by side
+      const barDiv = document.createElement('div');
+      barDiv.style.background = '#fff';
+      barDiv.style.padding = '14px';
+      barDiv.style.borderRadius = '8px';
+      const hBar = document.createElement('h4');
+      hBar.textContent = 'Quantity per Product';
+      barDiv.appendChild(hBar);
+      const canvasBar = document.createElement('canvas');
+      canvasBar.id = 'barQuantityChart';
+      canvasBar.height = 110;
+      barDiv.appendChild(canvasBar);
+
+      const stackDiv = document.createElement('div');
+      stackDiv.style.background = '#fff';
+      stackDiv.style.padding = '14px';
+      stackDiv.style.borderRadius = '8px';
+      const hStack = document.createElement('h4');
+      hStack.textContent = 'Product Quantities by Supplier';
+      stackDiv.appendChild(hStack);
+      const canvasStack = document.createElement('canvas');
+      canvasStack.id = 'stackedBarChart';
+      canvasStack.height = 110;
+      stackDiv.appendChild(canvasStack);
+
+      container.appendChild(barDiv);
+      container.appendChild(stackDiv);
+
+      // Summary Table full width
+      const tableDiv = document.createElement('div');
+      tableDiv.style.gridColumn = '1 / span 2';
+      tableDiv.style.marginTop = '18px';
+      const tableHeading = document.createElement('h4');
+      tableHeading.textContent = 'Summary Table';
+      tableDiv.appendChild(tableHeading);
+      const table = document.createElement('table');
+      table.id = 'summaryTable';
+      table.style.width = '100%';
+      table.style.borderCollapse = 'collapse';
+      table.style.border = '1px solid #ccc';
+      tableDiv.appendChild(table);
+      container.appendChild(tableDiv);
+    }
+  }
+
+  function createChart(ctx, config) {
+    return new Chart(ctx, config);
+  }
+
+  reportMonth.addEventListener('change', async () => {
+    const month = reportMonth.value;
+    if (!month) {
+      reportPlaceholder.innerHTML = '<p>Select a month to see report</p>';
+      downloadBtn.disabled = true;
+      return;
+    }
+
+    try {
+      const res = await fetch('import_reports.php', {
         method: 'POST',
-        headers: {'Content-Type':'application/x-www-form-urlencoded'},
-        body: `start_date=${start}&end_date=${end}`
-    })
-    .then(res => res.json())
-    .then(data => {
-        if(data.success){
-            document.getElementById('reportSection').style.display = 'grid';
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `month=${month}`
+      });
+      const data = await res.json();
 
-            // Example: show total orders
-            document.getElementById('totalOrders').textContent = data.rows.length;
+      if (!data.success || !data.rows || !data.rows.length) {
+        reportPlaceholder.innerHTML = '<p>No imports found for selected month.</p>';
+        downloadBtn.disabled = true;
+        charts.forEach(c => c.destroy());
+        charts = [];
+        return;
+      }
 
-            // TODO: Render charts dynamically
-            renderPieChart('productChart', data.productCount);
-            renderBarChart('revenueChart', data.revenueByProduct);
-            renderPieChart('statusChart', data.statusCount);
+      setupContainers();
+      charts.forEach(c => c.destroy());
+      charts = [];
+
+      const ctxLine = document.getElementById('lineImportsChart').getContext('2d');
+      charts.push(createChart(ctxLine, {
+        type: 'line',
+        data: {
+          labels: Object.keys(data.importsOverTime),
+          datasets: [{
+            label: 'Total Imports',
+            data: Object.values(data.importsOverTime),
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.19)',
+            fill: true,
+            tension: 0.35,
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: true } },
+          scales: { y: { beginAtZero: true } }
         }
-    });
-});
+      }));
 
+      const ctxPieProduct = document.getElementById('pieProductChart').getContext('2d');
+      charts.push(createChart(ctxPieProduct, {
+        type: 'pie',
+        data: {
+          labels: Object.keys(data.productCount),
+          datasets: [{
+            data: Object.values(data.productCount),
+            backgroundColor: [
+              "#3b82f6", "#9333ea", "#22c55e", "#f59e0b", "#ef4444",
+              "#10b981", "#6366f1", "#f43f5e", "#8b5cf6", "#db2777"
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom' },
+            datalabels: {
+              color: '#fff',
+              font: { weight: 'bold', size: 14 },
+              formatter: (val) => val
+            }
+          }
+        },
+        plugins: [ChartDataLabels]
+      }));
 
+      const ctxPieSupplier = document.getElementById('pieSupplierChart').getContext('2d');
+      charts.push(createChart(ctxPieSupplier, {
+        type: 'pie',
+        data: {
+          labels: Object.keys(data.supplierCount),
+          datasets: [{
+            data: Object.values(data.supplierCount),
+            backgroundColor: [
+              "#3b82f6", "#9333ea", "#22c55e", "#f59e0b", "#ef4444",
+              "#10b981", "#6366f1", "#f43f5e", "#8b5cf6", "#db2777"
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom' },
+            datalabels: {
+              color: '#fff',
+              font: { weight: 'bold', size: 14 },
+              formatter: (val) => val
+            }
+          }
+        },
+        plugins: [ChartDataLabels]
+      }));
+
+      const ctxBarQuantity = document.getElementById('barQuantityChart').getContext('2d');
+      charts.push(createChart(ctxBarQuantity, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(data.quantityByProduct),
+          datasets: [{
+            label: 'Quantity (kg)',
+            data: Object.values(data.quantityByProduct),
+            backgroundColor: '#22c55e',
+            borderRadius: 5
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true }
+          },
+          plugins: {
+            legend: { display: false },
+            datalabels: {
+              anchor: 'end',
+              align: 'top',
+              color: '#555',
+              font: { size: 13 },
+              formatter: (val) => val
+            }
+          }
+        },
+        plugins: [ChartDataLabels]
+      }));
+
+      const ctxStacked = document.getElementById('stackedBarChart').getContext('2d');
+      const suppliers = Object.keys(data.quantityBySupplier);
+      const productSet = new Set();
+      suppliers.forEach(s => Object.keys(data.quantityBySupplier[s]).forEach(p => productSet.add(p)));
+      const products = Array.from(productSet);
+
+      const stackDatasets = products.map((product, i) => ({
+        label: product,
+        data: suppliers.map(supp => data.quantityBySupplier[supp][product] || 0),
+        backgroundColor: [
+          "#3b82f6", "#9333ea", "#22c55e", "#f59e0b", "#ef4444",
+          "#10b981", "#6366f1", "#f43f5e", "#8b5cf6", "#db2777"
+        ][i % 10]
+      }));
+
+      charts.push(createChart(ctxStacked, {
+        type: 'bar',
+        data: {
+          labels: suppliers,
+          datasets: stackDatasets
+        },
+        options: {
+          responsive: true,
+          scales: {
+            x: { stacked: true },
+            y: { stacked: true, beginAtZero: true }
+          },
+          plugins: {
+            legend: { position: 'bottom' },
+            datalabels: {
+              color: '#444',
+              font: { weight: 'bold', size: 13 },
+              formatter: (val) => val > 0 ? val : '',
+              anchor: 'center',
+              align: 'center'
+            }
+          }
+        },
+        plugins: [ChartDataLabels]
+      }));
+
+      const table = document.getElementById('summaryTable');
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th style="border:1px solid #ccc; padding:8px;">Reference</th>
+            <th style="border:1px solid #ccc; padding:8px;">Supplier</th>
+            <th style="border:1px solid #ccc; padding:8px;">Product</th>
+            <th style="border:1px solid #ccc; padding:8px;">Quantity</th>
+            <th style="border:1px solid #ccc; padding:8px;">Arrival Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.rows.map(row => `
+            <tr>
+              <td style="border:1px solid #ccc; padding:8px;">${row.import_ref || ''}</td>
+              <td style="border:1px solid #ccc; padding:8px;">${row.suppliername || ''}</td>
+              <td style="border:1px solid #ccc; padding:8px;">${row.product_name || ''}</td>
+              <td style="border:1px solid #ccc; padding:8px;">${row.quantity || 0}</td>
+              <td style="border:1px solid #ccc; padding:8px;">${row.arrival_date || ''}</td>
+            </tr>`).join('')}
+        </tbody>`;
+
+      downloadBtn.disabled = false;
+
+    } catch (error) {
+      reportPlaceholder.innerHTML = `<p>Error loading report.</p>`;
+      downloadBtn.disabled = true;
+      charts.forEach(c => c.destroy());
+      charts = [];
+      console.error(error);
+    }
+  });
+
+  // PDF Download handler
+  downloadBtn.addEventListener('click', () => {
+    const monthVal = reportMonth.value;
+    if (!monthVal) return;
+
+    const filename = `${monthVal}-Report.pdf`;
+    const chartsContainer = document.getElementById('chartsContainer');
+    if (!chartsContainer) return alert('Report not ready to download.');
+
+    downloadBtn.style.display = "none";
+
+    setTimeout(() => {
+      html2canvas(chartsContainer, { scale: 2, backgroundColor: "#ffffff" }).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdfWidth = 800;
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width + 500;
+
+        const pdf = new window.jspdf.jsPDF({
+          orientation: "vertical",
+          unit: "px",
+          format: [pdfWidth, pdfHeight]
+        });
+
+        pdf.setFillColor(240, 248, 255);
+        pdf.rect(0, 0, pdfWidth, 60, "F");
+        pdf.setTextColor(0, 102, 153);
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(24);
+        pdf.text(`Makgrow Impex Pvt Ltd`, 30, 35);
+
+        pdf.setFontSize(18);
+        pdf.setTextColor(0);
+        pdf.text(`Monthly Import Report - ${monthVal}`, pdfWidth / 2, 35, { align: "center" });
+
+        const now = new Date();
+        const formattedDateTime = now.toLocaleString('en-LK', {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+          hour12: true
+        });
+        pdf.setFontSize(12);
+        pdf.setTextColor(60);
+        pdf.text(`Generated on: ${formattedDateTime}`, pdfWidth - 30, 35, { align: "right" });
+
+        const imgY = 70;
+        const imgHeight = canvas.height * (pdfWidth - 40) / canvas.width;
+        pdf.addImage(imgData, 'PNG', 20, imgY, pdfWidth - 40, imgHeight);
+
+        const footerY = imgY + imgHeight + 30;
+        pdf.setDrawColor(180);
+        pdf.line(20, footerY, pdfWidth - 20, footerY);
+        pdf.setFontSize(12);
+        pdf.setTextColor(100);
+        pdf.text("Prepared by: ImpoExpo System", 30, footerY + 25);
+        pdf.text("Page 1 of 1", pdfWidth - 80, footerY + 25);
+
+        pdf.save(filename);
+        downloadBtn.style.display = "";
+      }).catch(err => {
+        alert("Could not generate PDF: " + err.message);
+        downloadBtn.style.display = "";
+      });
+    }, 400);
+  });
 });

@@ -1,57 +1,73 @@
 <?php
 include 'db.php';
 
-// Get date range from request
-$start = $_POST['start_date'] ?? date('Y-m-01');
-$end   = $_POST['end_date'] ?? date('Y-m-d');
+// Get month from POST (format: YYYY-MM)
+$month = $_POST['month'] ?? date('Y-m');
 
-// Optional: validate dates
-if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $start) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $end)) {
-    echo json_encode(['success'=>false,'message'=>'Invalid date format']);
+// Validate format
+if (!preg_match('/^\d{4}-\d{2}$/', $month)) {
+    echo json_encode(['success' => false, 'message' => 'Invalid month format']);
     exit;
 }
 
-// Fetch orders in range
-$stmt = $conn->prepare("SELECT * FROM order_table WHERE order_placed_date BETWEEN ? AND ? ORDER BY order_id ASC");
+// Calculate start/end dates for the month
+$start = $month . '-01';
+$end = date('Y-m-t', strtotime($start));
+
+// Query imports for the selected month (use arrival_date, this matches your reporting needs)
+$stmt = $conn->prepare(
+    "SELECT i.import_ref, s.suppliername, p.product_name, st.quantity, i.arrival_date
+     FROM imports i
+     LEFT JOIN supplier s ON i.supplier_id = s.supplier_id
+     LEFT JOIN products p ON i.product_id = p.product_id
+     LEFT JOIN stock st ON i.stock_id = st.stock_id
+     WHERE i.arrival_date BETWEEN ? AND ?
+     ORDER BY i.arrival_date ASC"
+);
 $stmt->bind_param('ss', $start, $end);
 $stmt->execute();
 $result = $stmt->get_result();
 
 $rows = [];
-$productCount = [];
-$statusCount = [];
-$revenueByProduct = [];
-$buyerCount = [];
+$importsOverTime = [];      // For Line Chart: arrival_date => count
+$productCount = [];         // For Pie: product_name => count
+$supplierCount = [];        // For Pie: suppliername => count
+$quantityByProduct = [];    // For Bar: product_name => total kg
+$quantityBySupplier = [];   // For Stacked Bar: supplier => [product => qty]
 
-while($row = $result->fetch_assoc()){
+while ($row = $result->fetch_assoc()) {
     $rows[] = $row;
 
-    // Product info
-    $pid = $row['product_id'];
-    $pRes = $conn->query("SELECT product_name FROM products WHERE product_id=$pid");
-    $pName = $pRes->fetch_assoc()['product_name'] ?? "Product $pid";
+    $arrival = $row['arrival_date'];
+    $prod = $row['product_name'];
+    $supp = $row['suppliername'];
+    $qty = floatval($row['quantity'] ?? 0);
 
-    $productCount[$pName] = ($productCount[$pName] ?? 0) + 1;
-    $revenueByProduct[$pName] = ($revenueByProduct[$pName] ?? 0) + (float)$row['total_price'];
+    // Line Chart
+    $importsOverTime[$arrival] = ($importsOverTime[$arrival] ?? 0) + 1;
 
-    // Status
-    $statusCount[$row['status']] = ($statusCount[$row['status']] ?? 0) + 1;
+    // Product Pie
+    $productCount[$prod] = ($productCount[$prod] ?? 0) + 1;
 
-    // Buyer
-    $bid = $row['buyer_id'];
-    $bRes = $conn->query("SELECT buyername FROM buyer WHERE buyer_id=$bid");
-    $bName = $bRes->fetch_assoc()['buyername'] ?? "Buyer $bid";
-    $buyerCount[$bName] = ($buyerCount[$bName] ?? 0) + 1;
+    // Supplier Pie
+    $supplierCount[$supp] = ($supplierCount[$supp] ?? 0) + 1;
+
+    // Quantity per Product Bar
+    $quantityByProduct[$prod] = ($quantityByProduct[$prod] ?? 0) + $qty;
+
+    // Stacked Bar (Product Quantities by Supplier)
+    if (!isset($quantityBySupplier[$supp])) $quantityBySupplier[$supp] = [];
+    $quantityBySupplier[$supp][$prod] = ($quantityBySupplier[$supp][$prod] ?? 0) + $qty;
 }
 
-// Return JSON for frontend
 echo json_encode([
     'success' => true,
-    'period' => "$start to $end",
+    'month' => $month,
     'rows' => $rows,
+    'importsOverTime' => $importsOverTime,
     'productCount' => $productCount,
-    'revenueByProduct' => $revenueByProduct,
-    'statusCount' => $statusCount,
-    'buyerCount' => $buyerCount
+    'supplierCount' => $supplierCount,
+    'quantityByProduct' => $quantityByProduct,
+    'quantityBySupplier' => $quantityBySupplier
 ]);
 ?>
