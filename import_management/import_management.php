@@ -8,6 +8,9 @@
   <link rel="stylesheet" href="import.css" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 </head>
 <body>
   <div class="container">
@@ -272,15 +275,16 @@
   <div id="reportModal" class="modal">
     <div class="modal-content">
       <span class="close-btn">&times;</span>
-      <h2 style="margin-bottom: 20px;">Generate Reports</h2>
+      <h2 style="margin-bottom: 20px; text-align: center;">Generate Reports</h2>
       <div class="report-date-range">
         <div class="date-input">
           <label for="reportMonth">Select Month</label>
-          <input type="month" id="reportMonth" class="large-month-picker" />
+          <input type="month" id="reportMonth" class="large-month-picker"/>
+          <button id="monthResetBtn" title="Clear month"><i class="fas fa-sync-alt"></i></button>
         </div>
       </div>
       <div class="report-placeholder">
-        <p>Select date range!</p>
+        <p>Select a month!</p>
       </div>
       <div style="margin-top:30px; text-align:right;">
         <button id="downloadPdfBtn" class="btn btn-secondary" disabled>Download PDF</button>
