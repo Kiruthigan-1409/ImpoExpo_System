@@ -107,9 +107,7 @@
         
 
       </section>
-       
-              
-
+      
       <section class="filters-section">
         <div class="search-bar">
           <input type="text" id="suppliersearch" placeholder= "Search by Supplier name, Email, Contact.." class="search-input">
@@ -147,6 +145,12 @@
                 </ul>
               </div>
           </div>
+          <div class="filter-group">
+                <button class="btn btn-reset" id="resetSuppliers">
+                  <i class="fa-solid fa-rotate-right"></i>
+                  </button>
+          </div>
+
       </section>
 
       <!-- Data Table -->
