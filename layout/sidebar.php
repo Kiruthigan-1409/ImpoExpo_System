@@ -12,7 +12,7 @@
       <div class="nav-section">
         <h4>OPERATIONS</h4>
         <ul>
-          <li data-href="dashboard.php">
+          <li data-href="dashboard/dashboard.php">
             <i class="fas fa-chart-line"></i><span>Dashboard</span>
           </li>
           <li data-href="import_management/import_management.php">
