@@ -9,43 +9,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const statsGrid = document.getElementById('statsGrid');
   const orderSelect = document.getElementById('orderNo');
 
-  //Validations for calendar inputs - Cannot choose past days, months
-  const scheduledDateInput = document.getElementById('scheduledDate');
-  const actualDateInput = document.getElementById('actualDate');
-  const today = new Date().toISOString().split('T')[0];
-  scheduledDateInput.setAttribute('min', today);
-  actualDateInput.setAttribute('min', today);
-
-  let editingPrevStatus = null;     
-
-  function buildDeliveryPayloadFromForm() {
-    return {
-      reference: document.getElementById('orderNo').value || '',
-      buyerName: document.getElementById('buyerName').value || '',
-      city: document.getElementById('city').value || '',
-      address: document.getElementById('address').value || '',
-      productName: document.getElementById('productName').value || '',
-      quantity: document.getElementById('quantity').value || '',
-      driver: document.getElementById('driver').value || '',
-      scheduledDate: document.getElementById('scheduledDate').value || '',
-      actualDate: document.getElementById('actualDate').value || '',
-      deliveryStatus: document.getElementById('deliveryStatus').value || ''
-    };
-  }
-
-
   newBtn.onclick = () => {
     document.getElementById('modalTitle').textContent = 'New Delivery';
     form.reset();
     document.getElementById('editIndex').value = -1;
-    editingPrevStatus = null;
     enableAllFormFields();
     modal.classList.add('show');
   };
   closeBtn.onclick = () => {
     modal.classList.remove('show');
     document.getElementById('editIndex').value = -1;
-    editingPrevStatus = null;
     enableAllFormFields();
   };
 
@@ -56,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function disableNonEditableFields() {
-    const editable = ['driver', 'scheduledDate', 'actualDate', 'deliveryStatus'];
+    const editable = ['driver', 'scheduledDate', 'actualDate'];
     const els = form.querySelectorAll('input, select, textarea');
     els.forEach(el => {
       if (editable.includes(el.id)) {
@@ -66,29 +39,28 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
-  // Getting the drivers to the dropdown filter
+  
   function enableAllFormFields() {
     const els = form.querySelectorAll('input, select, textarea');
     els.forEach(el => el.removeAttribute('disabled'));
   }
 
   function populateDriverFilter() {
-    const driverFilter = document.getElementById('driverFilter');
-    const rows = document.querySelectorAll('#deliveryTableBody tr');
-    const drivers = new Set();
-    rows.forEach(row => {
-      const driverName = row.querySelectorAll('td')[6]?.textContent.trim();
-      if (driverName) drivers.add(driverName);
-    });
-    driverFilter.innerHTML = '<option value="">All</option>';
-    drivers.forEach(driver => {
-      const option = document.createElement('option');
-      option.value = driver;
-      option.textContent = driver;
-      driverFilter.appendChild(option);
-    });
-  }
+  const driverFilter = document.getElementById('driverFilter');
+  const rows = document.querySelectorAll('#deliveryTableBody tr');
+  const drivers = new Set();
+  rows.forEach(row => {
+    const driverName = row.querySelectorAll('td')[6]?.textContent.trim();
+    if (driverName) drivers.add(driverName);
+  });
+  driverFilter.innerHTML = '<option value="">All</option>';
+  drivers.forEach(driver => {
+    const option = document.createElement('option');
+    option.value = driver;
+    option.textContent = driver;
+    driverFilter.appendChild(option);
+  });
+}
 
   async function loadDeliveries() {
     try {
@@ -99,7 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       deliveries.forEach(d => {
         if (stats[d.delivery_status] !== undefined) stats[d.delivery_status]++;
-        
+
+        // safe status class (replace whitespace chars with hyphen)
         let statusClass = (d.delivery_status || '').toLowerCase().replace(/\s+/g, '-');
 
         tableBody.innerHTML += `
@@ -129,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="stat-card"><div class="stat-content"><h3>${stats['Returned']}</h3><p>Returned</p></div></div>
         <div class="stat-card"><div class="stat-content"><h3>${stats['Cancelled']}</h3><p>Cancelled</p></div></div>
       `;
-
+      
       populateDriverFilter();
 
     } catch (err) {
@@ -137,25 +110,6 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast('Failed to load deliveries');
     }
   }
-
-  async function notifyIfDelivered(delivery) {
-  console.log('notifyIfDelivered payload:', delivery);
-  try {
-    if ((delivery.deliveryStatus || '').toLowerCase() !== 'delivered') return;
-    await fetch('send_email.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(delivery)
-    });
-    showToast('Email notification sent');
-  } catch (e) {
-    console.error('Email notify failed', e);
-    showToast('Email failed', true);
-  }
-}
-
-
-
 
   async function loadOrders() {
     try {
@@ -205,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast('Failed to load order details', true);
     }
   });
-
+  
   function escapeHtml(text = '') {
     return String(text)
       .replace(/&/g, '&amp;')
@@ -250,17 +204,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const res = await fetch('delivery_api.php', { method: 'POST', body: formData });
         if (!res.ok) throw new Error('Network response was not ok');
         const result = await res.json();
-
         if (result.success) {
           showToast(result.message || 'Updated successfully');
-          
-          const payload = buildDeliveryPayloadFromForm();
-          
-          if (status.toLowerCase() === 'delivered' && editingPrevStatus !== 'delivered') {
-            notifyIfDelivered(payload);
-          }
-          editingPrevStatus = null;
-          
           modal.classList.remove('show');
           form.reset();
           document.getElementById('editIndex').value = 0;
@@ -270,8 +215,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           showToast(result.message || 'Update failed', true);
         }
-
-
       } catch (err) {
         console.error('Update failed', err);
         showToast('Update failed (network error)', true);
@@ -300,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return showToast('Actual date cannot be after the scheduled date', true);
     }
     if (containsNumber(driver)) return showToast('Driver name cannot contain numbers', true);
-
+    
 
     const formData = new FormData(form);
     formData.set("deliveryStatus", status);
@@ -309,15 +252,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch('delivery_api.php', { method: 'POST', body: formData });
       if (!res.ok) throw new Error('Network response was not ok');
       const result = await res.json();
-
       if (result.success) {
         showToast(result.message || 'Saved successfully');
-
-        // Build payload BEFORE reset
-        const justSaved = buildDeliveryPayloadFromForm();
-        notifyIfDelivered(justSaved); // safe; function ignores non-Delivered
-
-        // Now close/reset
         modal.classList.remove('show');
         form.reset();
         document.getElementById('editIndex').value = 0;
@@ -326,8 +262,6 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         showToast(result.message || 'Failed to save delivery', true);
       }
-
-
     } catch (err) {
       console.error('Save failed', err);
       showToast('Failed to save (network error)', true);
@@ -371,8 +305,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('scheduledDate').value = delivery.scheduled_date || '';
         document.getElementById('actualDate').value = delivery.actual_date || '';
         document.getElementById('deliveryStatus').value = delivery.delivery_status || 'Pending';
-
-        editingPrevStatus = (delivery.delivery_status || '').toLowerCase();
 
         disableNonEditableFields();
         modal.classList.add('show');

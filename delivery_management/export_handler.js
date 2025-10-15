@@ -131,10 +131,10 @@ function addImageFullWidth(doc, imgData, topY, margin = 40, canvasId = 'statusCh
 }
 
 function computeColumnWidths(doc, headCells, bodyRows, options = {}) {
-  const min = options.min || [70, 80, 90, 60, 90, 90, 90, 120, 80]; 
-  const max = options.max || [140,150,170,80,130,130,130,260,110];    
-  const pad = options.pad || 16;                                      
-  const sample = Math.min(options.sample || 200, bodyRows.length);   
+  const min = options.min || [70, 80, 90, 60, 90, 90, 90, 120, 80];   // per-col minimums
+  const max = options.max || [140,150,170,80,130,130,130,260,110];    // per-col maximums
+  const pad = options.pad || 16;                                      // cell padding estimate
+  const sample = Math.min(options.sample || 200, bodyRows.length);    // sample rows to speed up
 
   let w = headCells.map(txt => doc.getTextWidth(String(txt)) + pad);
 
@@ -247,6 +247,9 @@ document.getElementById('exportPdfBtn').addEventListener('click', async function
 
     if (y > doc.internal.pageSize.getHeight() - 220) { doc.addPage(); y = margin; }
     y = addImageFullWidth(doc, statusPieImg, y, margin, 'statusPieChart');
+
+
+
     
     doc.autoTable({
         head: [headCells],

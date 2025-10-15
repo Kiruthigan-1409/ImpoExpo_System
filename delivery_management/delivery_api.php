@@ -30,7 +30,7 @@ switch ($action) {
         break;
 
     case 'orders':
-        $res = $conn->query("SELECT * FROM order_table WHERE delivery_confirmation = 1 ORDER BY order_id DESC");
+        $res = $conn->query("SELECT * FROM order_table WHERE delivery_confirmation = 0 ORDER BY order_id DESC");
         $rows = [];
         while ($row = $res->fetch_assoc()) {
             $rows[] = $row;
