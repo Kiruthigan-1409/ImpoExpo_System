@@ -1,4 +1,5 @@
 <?php
+session_start();
 ini_set('display_errors', 1); error_reporting(E_ALL);
 include "db.php";
 
@@ -9,12 +10,15 @@ $pending_deliveries = $conn->query("SELECT COUNT(*) AS cnt FROM deliveries WHERE
 $monthly_revenue = $conn->query("SELECT SUM(amount) AS revenue FROM payments WHERE MONTH(payment_date)=MONTH(CURDATE()) AND YEAR(payment_date)=YEAR(CURDATE())")->fetch_assoc()['revenue'] ?? 0;
 
 // Improved LOW STOCK: sum quantity per product, filter by threshold (<=25)
+// Get threshold from SESSION or use default 25
+$low_stock_threshold = isset($_SESSION['low_stock_threshold']) ? intval($_SESSION['low_stock_threshold']) : 25;
+
 $low_stock = $conn->query(
     "SELECT p.product_name, SUM(s.quantity) AS quantity
      FROM products p
      JOIN stock s ON p.product_id = s.product_id
      GROUP BY p.product_id
-     HAVING SUM(s.quantity) <= 25"
+     HAVING SUM(s.quantity) <= " . intval($low_stock_threshold)
 )->fetch_all(MYSQLI_ASSOC);
 $low_stock_count = count($low_stock);
 
@@ -174,6 +178,9 @@ $activities = array_slice($activities, 0, 9);
             <div class="card low-stock-card">
                 <div class="card-head red">
                     <i class="fas fa-exclamation-triangle"></i> Low Stock Alerts
+                    <span style="font-size:13px;color:#d32f2f;">
+                        (Threshold: <?= htmlspecialchars($low_stock_threshold) ?> kg)
+                    </span>
                 </div>
                 <div class="alerts-list">
                     <?php if ($low_stock_count === 0): ?>

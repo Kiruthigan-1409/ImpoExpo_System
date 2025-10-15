@@ -18,6 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const openreportbtn = document.getElementById("openReportModal");   
         const reportModal = document.querySelector("#monthlyReportModal");
         const closeReportBtn = document.getElementById("closeReportModal");
+        const resetbtn = document.getElementById("resetSuppliers")
 
 
         openBtn.addEventListener("click", () => {
@@ -40,7 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 window.location.href = "topSupplier.php";
         });
 
-
+        
 
         //  Load Products
         fetch("../backend/get_products.php")
@@ -72,7 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <td>${supplier.s_email}</td>
                             <td>${supplier.contact}</td>
                             <td data-productid="${supplier.product_id}">${supplier.product_name}</td>
-                            <td>${supplier.s_status}</td>
+                            <td><span class="${supplier.s_status.toLowerCase()}"> ${supplier.s_status}</span></td>
                              <td class="actions">
                                 <button class="action-btn edit" data-id="${supplier.supplier_id}" title="Edit">
                                 <i class="fa-regular fa-pen-to-square fa-lg"></i>
@@ -89,6 +90,16 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         loadSuppliers(); 
+
+
+        //reset button
+        resetbtn.addEventListener("click", () => {
+            loadSuppliers();
+            setTimeout(() => {
+                tableBody.style.opacity = "1";
+            }, 300)
+            });
+
 
         
         form.addEventListener("submit", function(e){     
@@ -222,6 +233,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 form.s_productid.value = productId;
                 form.s_status.value = row.children[7].textContent;
 
+                form.s_status.value = row.children[7].textContent.trim();
                 
                 form.dataset.editId = id;
                 document.getElementById("modalTitle").textContent = "Edit Supplier";

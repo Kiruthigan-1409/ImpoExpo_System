@@ -12,6 +12,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const totalcitycount = document.querySelector(".citycount");
     const activeSuppliers = document.querySelector(".activesuppliercount");
     const countrycount = document.querySelector(".countrycount");
+     const resetbtn = document.getElementById("resetbuyers");
+     const openreportbtn = document.getElementById("buyerReport");  
 
 
 
@@ -30,6 +32,10 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("click", (e) => {
         if (e.target === modal) modal.style.display = "none";
     });
+
+    openreportbtn.addEventListener("click", () => {
+                window.location.href = "topSupplier.php";
+        });
 
     //Load buyer products
     fetch("../backend/get_products.php")
@@ -62,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         <td>${buyer.b_email}</td>
                         <td data-contact="${buyer.b_contact}">+94 ${buyer.b_contact}</td>
                         <td data-productid="${buyer.product_id}">${buyer.product_name}</td>
-                        <td>${buyer.b_status}</td>
+                        <td><span class="${buyer.b_status.toLowerCase()}">${buyer.b_status}</span></td>
                         <td class="actions">
                         <button class="action-btn edit" data-id="${buyer.buyer_id}" title="Edit">
                             <i class="fa-regular fa-pen-to-square fa-lg"></i>
@@ -80,6 +86,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     }
     loadbuyerdata();
+
+     resetbtn.addEventListener("click", () => {
+            loadbuyerdata();
+            setTimeout(() => {
+                tableBody.style.opacity = "1";
+            }, 300)
+            });
 
     //buyer add and edit form
     form.addEventListener("submit", function (e) {

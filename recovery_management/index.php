@@ -15,7 +15,8 @@ $sql = "SELECT
     d.delivery_code, 
     COALESCE(p.product_name, d.product_name) AS product_name,  
     d.quantity AS delivery_quantity, 
-    COALESCE(p.price_per_kg, (SELECT price_per_kg FROM products WHERE product_name = d.product_name LIMIT 1)) AS unit_price
+    COALESCE(p.price_per_kg, (SELECT price_per_kg FROM products WHERE product_name = d.product_name LIMIT 1)) AS unit_price,
+    d.actual_date
   FROM deliveries d
   LEFT JOIN order_table o ON d.order_no = o.order_id
   LEFT JOIN products p ON o.product_id = p.product_id
@@ -180,7 +181,8 @@ $recordsResult = $conn->query($records_sql);
                     <option value="<?= htmlspecialchars($d['delivery_code']) ?>"
                             data-product="<?= htmlspecialchars($d['product_name']) ?>"
                             data-quantity="<?= htmlspecialchars($d['delivery_quantity']) ?>"
-                            data-unit-price="<?= $d['unit_price'] ?>">
+                            data-unit-price="<?= $d['unit_price'] ?>"
+                            data-delivery-date="<?= htmlspecialchars($d['actual_date']) ?>">
                         <?= htmlspecialchars($d['delivery_code']) ?> - <?= htmlspecialchars($d['product_name']) ?> (Qty: <?= $d['delivery_quantity'] ?>, Unit Price: LKR <?= number_format($d['unit_price'], 2) ?>)
                     </option>
                   <?php endforeach; ?>
@@ -294,6 +296,7 @@ $recordsResult = $conn->query($records_sql);
     </section>
 
      <!-- Monthly Reports Overlay -->
+    <!-- Monthly Reports Overlay -->
     <div class="modal-overlay" id="reportsOverlay" style="display:none;">
       <div class="modal" style="max-width:700px">
         <div class="modal-header">
@@ -306,9 +309,45 @@ $recordsResult = $conn->query($records_sql);
             <input type="month" id="monthInput" name="monthInput" max="<?= date('Y-m') ?>" value="<?= date('Y-m') ?>" required>
             <button type="submit" class="btn btn-primary">Generate</button>
           </form>
-          <button id="downloadPdfBtn" class="btn btn-secondary" style="margin-bottom:10px; float:right;">Download as PDF</button>
-          <div id="reportContent">
+          <button id="downloadPdfBtn" class="btn btn-secondary" style="margin-bottom:10px; float:right;">
+            Download as PDF
+          </button>
+          <div id="pdfReportContent">
             <!-- Chart + Table inserted by JS -->
+            <!-- Ensure IDs and explicit size! -->
+            <h3 style="margin-bottom:0.3em; color:#204289;">Monthly Financial Impact Trend</h3>
+            <canvas id="monthlyTrendBar" width="600" height="200"></canvas>
+            <div style="display: flex; gap:28px; flex-wrap:wrap; margin-bottom:26px">
+              <!-- Mini stat cards, can be injected here via JS if needed -->
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 32px;">
+              <div>
+                <canvas id="actionPie" width="250" height="250"></canvas>
+                <div style="text-align:center;font-weight:bold;color:#444">Returned vs Disposed (Qty)</div>
+              </div>
+              <div>
+                <canvas id="impactBar" width="250" height="250"></canvas>
+                <div style="text-align:center;font-weight:bold;color:#444">Financial Impact by Action</div>
+              </div>
+              <div>
+                <canvas id="prodBar" width="250" height="250"></canvas>
+                <div style="text-align:center;font-weight:bold;color:#444">Product Return/Disposal Split</div>
+              </div>
+            </div>
+            <h3 style="margin-top:2em;margin-bottom:.5em; color:#204289;">Detailed Product-wise Flow</h3>
+            <table class="data-table" style="width:100%;margin-bottom:1em;">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th style="color:#288943;">Returned Qty</th>
+                  <th style="color:#c62c2e;">Disposed Qty</th>
+                  <th style="color:#288943;">Returned Value</th>
+                  <th style="color:#c62c2e;">Disposed Value</th>
+                </tr>
+              </thead>
+              <tbody id="productBreakdownBody"></tbody>
+            </table>
+            <div style="color:#888;padding-bottom:10px;text-align:right;"><small>Note: Red numbers = business loss; Green = cost recovery.</small></div>
           </div>
         </div>
       </div>

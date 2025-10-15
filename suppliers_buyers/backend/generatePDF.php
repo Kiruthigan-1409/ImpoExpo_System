@@ -93,17 +93,16 @@
         $percentFontSize = 14;
         $legendFontSize = 12;
 
-        // Draw pie slices with percent labels inside
         foreach ($data as $label => $value) {
             $end_angle = $start_angle + ($value / $total) * 360;
             $color = imagecolorallocate($image, $colors[$label][0], $colors[$label][1], $colors[$label][2]);
             imagefilledarc($image, $center_x, $center_y, $radius*2, $radius*2, $start_angle, $end_angle, $color, IMG_ARC_PIE);
 
-            // Percent label
+            
             $mid_angle = deg2rad(($start_angle + $end_angle)/2);
             $percent = round(($value/$total)*100) . '%';
-            $text_x = $center_x + cos($mid_angle) * ($radius/1.5);
-            $text_y = $center_y + sin($mid_angle) * ($radius/1.5);
+            $text_x = (int)($center_x + cos($mid_angle) * ($radius/1.5));
+            $text_y = (int)($center_y + sin($mid_angle) * ($radius/1.5));
             if(file_exists($font_file)){
                 imagettftext($image, $percentFontSize, 0, $text_x-10, $text_y, $black, $font_file, $percent);
             } else {
@@ -113,7 +112,7 @@
             $start_angle = $end_angle;
         }
 
-        // Draw legend on right
+        
         $legendX = 450;
         $legendY = 50;
         $i = 0;
