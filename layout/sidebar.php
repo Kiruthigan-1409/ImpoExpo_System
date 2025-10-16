@@ -55,6 +55,15 @@
           </li>
         </ul>
       </div>
+
+      <div class="nav-section">
+        <h4>LOGOUT</h4>
+        <ul>
+          <li onclick="window.location.href='<?= $baseURL ?>authentication/logout.php'">
+            <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+          </li>
+        </ul>
+      </div>
     </nav>
   </div>
 
