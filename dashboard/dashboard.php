@@ -25,7 +25,7 @@ $activities = [];
 
 // Payments
 foreach ($conn->query("
-    SELECT 'Payment' AS type, p.amount, b.buyername, p.payment_date, p.status
+    SELECT 'Payment' AS type, p.amount, b.buyername, p.payment_date, p.status, p.created_at
     FROM payments p
     JOIN buyer b ON p.buyer_id = b.buyer_id
     ORDER BY p.payment_date DESC LIMIT 30
@@ -33,21 +33,21 @@ foreach ($conn->query("
     $activities[] = [
         'type' => 'Payment',
         'desc' => "Payment of LKR " . number_format($p['amount']) . " received from " . htmlspecialchars($p['buyername']),
-        'date' => date('Y-m-d H:i:s', strtotime($p['payment_date'])),
+        'date' => $p['created_at'], // use the created_at datetime for activity
         'status' => $p['status']
     ];
 }
 
 // Shipments (delivery)
 foreach ($conn->query("
-    SELECT 'Shipment' AS type, delivery_code, delivery_status, scheduled_date
+    SELECT 'Shipment' AS type, delivery_code, delivery_status, scheduled_date, created_at
     FROM deliveries
-    ORDER BY scheduled_date DESC LIMIT 30
+    ORDER BY created_at DESC LIMIT 30
 ")->fetch_all(MYSQLI_ASSOC) as $d) {
     $activities[] = [
         'type' => 'Shipment',
         'desc' => "Delivery " . $d['delivery_code'] . " (" . $d['delivery_status'] . ") scheduled",
-        'date' => date('Y-m-d H:i:s', strtotime($d['scheduled_date'])),
+        'date' => $d['created_at'], // Use the actual row creation datetime
         'status' => $d['delivery_status']
     ];
 }
@@ -80,6 +80,21 @@ foreach ($conn->query("
         'status' => $r['action_taken'] . " / " . $r['item_condition']
     ];
 }
+
+// Order 
+foreach ($conn->query("
+    SELECT order_id, product_id, buyer_id, order_address, size, quantity, total_price, order_placed_date, deadline_date, description, status, payment_confirmation, delivery_confirmation, created_at
+    FROM order_table
+    ORDER BY created_at DESC LIMIT 30
+")->fetch_all(MYSQLI_ASSOC) as $o) {
+    $activities[] = [
+        'type' => 'Order',
+        'desc' => "Order {$o['order_id']}: {$o['description']} ({$o['status']})",
+        'date' => $o['created_at'],
+        'status' => $o['status']
+    ];
+}
+
 
 // Defensive fallback: ensure every entry has 'date'
 foreach ($activities as &$a) {
