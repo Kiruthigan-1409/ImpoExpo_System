@@ -92,10 +92,7 @@ $entries = count($suppliers);
 
     <div class="filters-right">
       <button class="btn btn-pdf" id="pdfbtn">
-        <i class="fa-solid fa-file-pdf"></i> PDF
-      </button>
-      <button class="btn btn-excel" id="excelbtn">
-        <i class="fa-solid fa-file-excel"></i> CSV
+        <i class="fa-solid fa-file-pdf"></i> Export PDF
       </button>
     </div>
   </section>
@@ -129,11 +126,6 @@ $entries = count($suppliers);
         <input type="checkbox" class="buyercharts" id="buyerdis" name="buyercharts[]" value="buyerdis">
         <label for="buyerdis">Show data visual for buyer distribution across cites</label>
       </div>
-
-      <div class="checkbox-item">
-        <input type="checkbox" class="buyercharts" id="buyerbarchart" name="buyercharts[]" value="buyerbarchart">
-        <label for="buyerbarchart">Show pie chart for product distribution according to buyer count</label>
-      </div>
       <div class="checkbox-item">
         <input type="checkbox" class="buyercharts" id="buyercoloumn" name="buyercharts[]" value="buyercoloumn">
         <label for="buyercoloumn">Show coloumn chart for top 5 buyer according to revenue </label>
@@ -149,10 +141,7 @@ $entries = count($suppliers);
 
     <div class="filters-right">
       <button class="btn btn-pdf" id="buyerpdfbtn">
-        <i class="fa-solid fa-file-pdf"></i> PDF
-      </button>
-      <button class="btn btn-excel" id="buyerexcelbtn">
-        <i class="fa-solid fa-file-excel"></i> CSV
+        <i class="fa-solid fa-file-pdf"></i> Export PDF
       </button>
     </div>
   </section>
@@ -263,18 +252,6 @@ $entries = count($suppliers);
           selectedCharts.forEach(chart => params.append('buyercharts[]', chart));
 
           window.location.href = "../backend/generatePDF buyer.php?" + params.toString();
-      });
-
-   
-      document.getElementById("excelbtn").addEventListener("click", () => {
-        if (!validateFilters()) return;
-
-        const fromDate = document.getElementById("fromDate").value;
-        const toDate = document.getElementById("toDate").value;
-        const entries = document.getElementById("entries").value;
-
-        const params = new URLSearchParams({ fromDate, toDate, entries });
-        window.location.href = "../backend/generateExceltopsupplier.php?" + params.toString();
       });
 
       const cards = document.querySelectorAll('.filters-card');

@@ -8,6 +8,8 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <link rel="stylesheet" href="supplier.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/parsleyjs/src/parsley.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </head>
 <body>
   <div class="app-container">
@@ -27,7 +29,11 @@
               </span>
               Monthly Reports
             </button>
+            <button id="viewMapBtn" class="btn btn-primary"><i class="fa-solid fa-earth-americas"></i></button>
           </div>
+        </div>
+        <div id="mapContainer" style="display: none; margin-top: 20px;">
+            <div id="networkMap" style="height: 500px; width: 100%; border-radius: 10px;"></div>
         </div>
       </header>
 

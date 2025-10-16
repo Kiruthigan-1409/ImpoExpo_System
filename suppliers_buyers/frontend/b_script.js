@@ -427,6 +427,61 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    let mapInitialized = false; 
+    let map;
+    document.getElementById("viewMapBtn").addEventListener("click", () => {
+            const container = document.getElementById("mapContainer");
+
+            // Toggle visibility
+            if (container.style.display === "none") {
+                container.style.display = "block";
+
+                // Initialize map  once
+                if (!mapInitialized) {
+                    map = L.map("networkMap").setView([20, 0], 2);
+                    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                        attribution: '&copy; OpenStreetMap contributors',
+                    }).addTo(map);
+
+                    fetch("../backend/getNetworkData.php")
+                        .then(res => res.json())
+                        .then(data => {
+                            data.suppliers.forEach(supplier => {
+                                L.marker([supplier.lat, supplier.lng])
+                                    .addTo(map)
+                                    .bindPopup(`<b>Supplier:</b> ${supplier.suppliername}<br>${supplier.s_country}`);
+                            });
+
+                            data.buyers.forEach(buyer => {
+                                L.marker([buyer.lat, buyer.lng], {
+                                    icon: L.icon({
+                                        iconUrl: "https://cdn-icons-png.flaticon.com/512/2991/2991231.png",
+                                        iconSize: [25, 25],
+                                    }),
+                                })
+                                    .addTo(map)
+                                    .bindPopup(`<b>Buyer:</b> ${buyer.buyername}<br>${buyer.b_city}`);
+                            });
+
+                            data.connections.forEach(conn => {
+                                L.polyline([conn.supplierCoords, conn.buyerCoords], {
+                                    color: "#008080",
+                                    weight: 2,
+                                    opacity: 0.6,
+                                }).addTo(map);
+                            });
+                        })
+                        .catch(err => console.error("Error loading network data:", err));
+
+                    mapInitialized = true;
+                }
+
+            } else {
+                container.style.display = "none";
+            }
+        });
+
+
              
 
        

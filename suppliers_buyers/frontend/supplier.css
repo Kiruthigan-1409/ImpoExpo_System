@@ -226,8 +226,6 @@ body {
 }
 
 
-
-
 /* Stats Grid */
 .stats-grid {
   display: grid;
@@ -626,6 +624,18 @@ td span.inactive {
 }
 
 
+#historyModal .modal-content {
+  max-width: 600px;
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+}
+#historyTableBody td {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+
 .data-table td {
   padding: 16px;
   border-bottom: 1px solid #f1f5f9;
@@ -942,6 +952,13 @@ input.parsley-error {
   padding-top: 10px;
 }
 
+#mapContainer {
+  animation: fadeIn 0.5s ease-in-out;
+}
+@keyframes fadeIn {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
 
   
 @media print {

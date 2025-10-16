@@ -18,7 +18,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const openreportbtn = document.getElementById("openReportModal");   
         const reportModal = document.querySelector("#monthlyReportModal");
         const closeReportBtn = document.getElementById("closeReportModal");
-        const resetbtn = document.getElementById("resetSuppliers")
+        const resetbtn = document.getElementById("resetSuppliers");
+      
 
 
         openBtn.addEventListener("click", () => {
@@ -457,34 +458,88 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     //apply filter function
-     function applyFilters() {
-        const selectedCountry = document.querySelector(".filter-country .dropdown-selected").textContent;
-        const selectedStatus  = document.querySelector(".filter-status .dropdown-selected").textContent;
-        const selectedProduct = document.querySelector(".filter-product .dropdown-selected").textContent;
+        function applyFilters() {
+            const selectedCountry = document.querySelector(".filter-country .dropdown-selected").textContent;
+            const selectedStatus  = document.querySelector(".filter-status .dropdown-selected").textContent;
+            const selectedProduct = document.querySelector(".filter-product .dropdown-selected").textContent;
 
-        const rows = document.querySelectorAll("#supplierTable tbody tr");
+            const rows = document.querySelectorAll("#supplierTable tbody tr");
 
-        rows.forEach(row => {
-            const country = row.cells[2]?.textContent.trim() || "";
-            const product = row.cells[6]?.textContent.trim() || "";
-            const status  = row.cells[7]?.textContent.trim() || "";
+            rows.forEach(row => {
+                const country = row.cells[2]?.textContent.trim() || "";
+                const product = row.cells[6]?.textContent.trim() || "";
+                const status  = row.cells[7]?.textContent.trim() || "";
 
-            let show = true;
-            if (selectedCountry !== "All" && country !== selectedCountry) show = false;
-            if (selectedStatus !== "All" && status !== selectedStatus) show = false;
-            if (selectedProduct !== "All" && product !== selectedProduct) show = false;
+                let show = true;
+                if (selectedCountry !== "All" && country !== selectedCountry) show = false;
+                if (selectedStatus !== "All" && status !== selectedStatus) show = false;
+                if (selectedProduct !== "All" && product !== selectedProduct) show = false;
 
-            row.style.display = show ? "" : "none";
+                row.style.display = show ? "" : "none";
+            });
+        }
+
+        let mapInitialized = false;
+        let map; 
+
+        document.getElementById("viewMapBtn").addEventListener("click", () => {
+            const container = document.getElementById("mapContainer");
+
+            // Toggle visibility
+            if (container.style.display === "none") {
+                container.style.display = "block";
+
+                // Initialize map  once
+                if (!mapInitialized) {
+                    map = L.map("networkMap").setView([20, 0], 2);
+                    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                        attribution: '&copy; OpenStreetMap contributors',
+                    }).addTo(map);
+
+                    fetch("../backend/getNetworkData.php")
+                        .then(res => res.json())
+                        .then(data => {
+                            data.suppliers.forEach(supplier => {
+                                L.marker([supplier.lat, supplier.lng])
+                                    .addTo(map)
+                                    .bindPopup(`<b>Supplier:</b> ${supplier.suppliername}<br>${supplier.s_country}`);
+                            });
+
+                            data.buyers.forEach(buyer => {
+                                L.marker([buyer.lat, buyer.lng], {
+                                    icon: L.icon({
+                                        iconUrl: "https://cdn-icons-png.flaticon.com/512/2991/2991231.png",
+                                        iconSize: [25, 25],
+                                    }),
+                                })
+                                    .addTo(map)
+                                    .bindPopup(`<b>Buyer:</b> ${buyer.buyername}<br>${buyer.b_city}`);
+                            });
+
+                            data.connections.forEach(conn => {
+                                L.polyline([conn.supplierCoords, conn.buyerCoords], {
+                                    color: "#008080",
+                                    weight: 2,
+                                    opacity: 0.6,
+                                }).addTo(map);
+                            });
+                        })
+                        .catch(err => console.error("Error loading network data:", err));
+
+                    mapInitialized = true;
+                }
+
+            } else {
+                container.style.display = "none";
+            }
         });
-    }
-
-             
 
 
-    });
 
-    
+            });
 
-  
+            
+
+        
 
 
