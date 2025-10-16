@@ -1,6 +1,8 @@
-<<?php include '../authentication/auth.php'; ?>
+<?php include '../authentication/auth.php'; ?>
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 // Connect DB
 include 'db.php';
 

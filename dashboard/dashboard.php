@@ -52,19 +52,20 @@ foreach ($conn->query("
     ];
 }
 
-// Import
+// Import Activities (uses created_at for activity date)
 foreach ($conn->query("
-    SELECT 'Import' AS type, import_ref, suppliername, product_name, import_date, arrival_date
+    SELECT 'Import' AS type, import_ref, suppliername, product_name, import_date, arrival_date, created_at
     FROM imports
     ORDER BY import_date DESC LIMIT 30
 ")->fetch_all(MYSQLI_ASSOC) as $i) {
     $activities[] = [
         'type' => 'Import',
         'desc' => "Import " . $i['import_ref'] . ": " . $i['product_name'] . " from " . $i['suppliername'] . ", Arrives: " . date('M d', strtotime($i['arrival_date'])),
-        'date' => date('Y-m-d H:i:s', strtotime($i['import_date'])),
+        'date' => $i['created_at'], // uses created_at as activity date
         'status' => 'Recorded'
     ];
 }
+
 
 // Recovery
 foreach ($conn->query("
