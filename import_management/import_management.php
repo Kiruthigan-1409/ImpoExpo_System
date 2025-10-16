@@ -1,3 +1,4 @@
+<?php include '../authentication/auth.php'; ?>
 <?php include 'db.php'; ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -11,6 +12,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
   <div class="container">
@@ -292,6 +294,8 @@
     </div>
   </div>
 
+  <!--Special popup message -->
+  <div id="activityMessage">🎉 High Activity Month!</div>
   <script src="script.js"></script>
 </body>
 </html>

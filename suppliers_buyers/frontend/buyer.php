@@ -1,4 +1,5 @@
 
+<?php include '../../authentication/auth.php'; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>

@@ -1,3 +1,4 @@
+<?php include '../authentication/auth.php'; ?>
 <?php
 include 'db.php';
 
@@ -27,6 +28,16 @@ if ($result && $result->num_rows > 0) {
         $delivery_data[] = $row;
     }
 }
+
+// ---- TOP 3 HIGHEST-LOSS RECOVERIES THIS MONTH ----
+$top_losses = $conn->query("
+    SELECT recovery_ref, product, action_taken, financial_impact, recovery_date, reason, quantity
+    FROM recovery_records
+    WHERE MONTH(recovery_date) = MONTH(CURDATE()) AND YEAR(recovery_date) = YEAR(CURDATE())
+    ORDER BY financial_impact DESC
+    LIMIT 3
+")->fetch_all(MYSQLI_ASSOC);
+
 
 // ---- STATS ----
 $recoveryRef = "REC-" . date("YmdHis");
@@ -80,6 +91,9 @@ $recordsResult = $conn->query($records_sql);
           <p>Track and manage product returns and rejections</p>
         </div>
         <div class="header-actions">
+          <button id="openTopLossesBtn" style="background:#fc1717b2;border:none;border-radius:8px;padding:7px 16px;font-weight:bold;box-shadow:0 2px 5px #fc1717b2;cursor:pointer;">
+              💸 Show Top Losses (This Month)
+          </button>
           <button class="btn btn-secondary" id="openReportsBtn">
             <span class="icon"><i class="fa-regular fa-file fa-xl"></i></span>Monthly Reports
           </button>
@@ -296,6 +310,7 @@ $recordsResult = $conn->query($records_sql);
     </section>
 
      <!-- Monthly Reports Overlay -->
+    <!-- Monthly Reports Overlay -->
     <div class="modal-overlay" id="reportsOverlay" style="display:none;">
       <div class="modal" style="max-width:700px">
         <div class="modal-header">
@@ -308,8 +323,10 @@ $recordsResult = $conn->query($records_sql);
             <input type="month" id="monthInput" name="monthInput" max="<?= date('Y-m') ?>" value="<?= date('Y-m') ?>" required>
             <button type="submit" class="btn btn-primary">Generate</button>
           </form>
-          <button id="downloadPdfBtn" class="btn btn-secondary" style="margin-bottom:10px; float:right;">Download as PDF</button>
-          <div id="reportContent">
+          <button id="downloadPdfBtn" class="btn btn-secondary" style="margin-bottom:10px; float:right;">
+            Download as PDF
+          </button>
+          <div id="pdfReportContent">
             <!-- Chart + Table inserted by JS -->
             <!-- Ensure IDs and explicit size! -->
             <h3 style="margin-bottom:0.3em; color:#204289;">Monthly Financial Impact Trend</h3>
@@ -352,6 +369,37 @@ $recordsResult = $conn->query($records_sql);
 
   </main>
 </div>
+
+<!-- Top losses -->
+ 
+<div id="topLossesModal" class="modal-overlay" style="display:none;">
+  <div class="modal" style="max-width:440px;background:#f5b9b9ff;border:1px solid #e69595ff;box-shadow:0 2px 12px #ee8282cc;">
+    <div class="modal-header" style="border-bottom:1px solid #fd8a8aff;">
+      <span style="font-weight:bold;font-size:1.1em;color:#b7791f">💵
+      Top 3 Highest-Loss (this month)</span>
+      <button id="closeTopLossesBtn" style="background:none;border:none;font-size:1.7em;float:right;color:#f5b9b9ff;cursor:pointer;margin-left:auto;">&times;</button>
+    </div>
+    <div class="modal-body" style="padding:18px 14px 14px 14px;">
+      <ol style="margin:0;padding-left:1.15em;">
+        <?php foreach($top_losses as $i => $loss): ?>
+          <li style="margin-bottom:12px;">
+              <span style="font-weight:bold;"><?= htmlspecialchars($loss['product']) ?></span>
+              <span style="color:#b7791f;font-size:0.97em;">(<?= htmlspecialchars($loss['action_taken']) ?>, <?= htmlspecialchars($loss['reason']) ?>, Qty: <?= $loss['quantity'] ?>)</span>
+              <span style="float:right; color:#e53e3e;font-weight:bold;">
+                  LKR <?= number_format($loss['financial_impact'],2) ?>
+                  <?php if($i == 0): ?> <?php elseif($i == 1): ?> <?php elseif($i == 2): ?> <?php endif; ?>
+              </span><br>
+              <span style="font-size:0.92em;color:#666;">On <?= date('M d', strtotime($loss['recovery_date'])) ?> (Ref: <?= htmlspecialchars($loss['recovery_ref']) ?>)</span>
+          </li>
+        <?php endforeach; ?>
+        <?php if (empty($top_losses)): ?>
+            <li style="color:#aaa;">No recovery records this month.</li>
+        <?php endif; ?>
+      </ol>
+    </div>
+  </div>
+</div>
+
 <script src="script.js"></script>
 </body>
 </html>

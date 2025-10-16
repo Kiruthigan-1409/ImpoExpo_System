@@ -1,17 +1,7 @@
+<?php include '../authentication/auth.php'; ?>
 <?php
-
-define('DB_SERVER', '142.91.102.107');
-define('DB_USER', 'sysadmin_sliitppa25');
-define('DB_PASS', ':%ngWE6;?*wm$Qy|');
-define('DB_NAME', 'sysadmin_sliitppa25');
-$conn = mysqli_connect(DB_SERVER, DB_USER, DB_PASS,DB_NAME);
-
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
+include 'db.php';
 $result = $conn->query("SELECT order_id FROM order_table ORDER BY order_placed_date DESC, order_id DESC LIMIT 1");
-
 if ($row = $result->fetch_assoc()) {
     $lastId = $row['order_id']; 
     $num = (int) substr($lastId, 4); 
@@ -20,7 +10,6 @@ if ($row = $result->fetch_assoc()) {
 } else {
     $orderID = "ORD-001";
 }
-
 // -------- Orders Placed (total orders) --------
 $sql_total = "SELECT COUNT(*) AS total_orders FROM order_table";
 $result_total = $conn->query($sql_total);
@@ -44,7 +33,6 @@ $sql_completed = "SELECT COUNT(*) AS completed_orders FROM order_table WHERE sta
 $result_completed = $conn->query($sql_completed);
 $completedOrders = $result_completed->fetch_assoc()['completed_orders'];
 //==========================================================================================================================
-
 // Fetch distinct months from orders
 $monthsResult = $conn->query("
     SELECT DISTINCT DATE_FORMAT(order_placed_date, '%Y-%m') AS month
@@ -57,7 +45,6 @@ while ($row = $monthsResult->fetch_assoc()) {
     $availableMonths[] = $row['month'];
 }
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -73,11 +60,8 @@ while ($row = $monthsResult->fetch_assoc()) {
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 </head>
 <body>
-    
   <div class="app-container">
-    
     <?php include '../layout/sidebar.php'; ?>
-  
     <!-- Main Content -->
     <main class="main-content">
       <header class="page-header">
@@ -279,19 +263,24 @@ if ($result->num_rows > 0) {
         $statusBadge = '<span class="status-badge '.$statusClass.'">'.$status.'</span>';
 
         // -------- Deadline Badge --------
-        
+// -------- Deadline Badge --------
 $deadline = $row['deadline_date'];
 $today = date("Y-m-d");
 $daysLeft = ceil((strtotime($deadline) - strtotime($today)) / (60 * 60 * 24)); 
+$statusLower = strtolower($status);
 
-if (strtolower($status) === 'pending') {
+if ($statusLower === 'pending' || $statusLower === 'confirmed') {
+
+    // Define color classes differently for each status
+    $prefix = ($statusLower === 'confirmed') ? 'confirmed-' : 'deadline-';
+
     if ($daysLeft > 0) {
         if ($daysLeft <= 2) {
-            $deadlineClass = "deadline-overdue"; // red
+            $deadlineClass = $prefix . "overdue"; // red tone
         } elseif ($daysLeft <= 5) {
-            $deadlineClass = "deadline-soon"; // orange
+            $deadlineClass = $prefix . "soon"; // orange tone
         } else {
-            $deadlineClass = "deadline-safe"; // green
+            $deadlineClass = $prefix . "safe"; // green tone
         }
         $deadlineBadge = '<span class="deadline-badge '.$deadlineClass.'">'.$deadline.'</span>';
     } else {
@@ -306,8 +295,9 @@ if (strtolower($status) === 'pending') {
           <small class="due-by">'.$dueText.'</small>
         </div>';
     }
+
 } else {
-    // Confirmed/done
+    // Done or cancelled
     $deadlineClass = "deadline-inactive"; // grey
     $deadlineBadge = '<span class="deadline-badge '.$deadlineClass.'">'.$deadline.'</span>';
 }
@@ -642,7 +632,7 @@ reportForm.addEventListener('submit', function(e){
   <div class="form-row">
   <div class="form-group">
     <label for="deadline_date">Deadline Date *</label>
-    <input type="date" id="deadline_date" name="deadline_date" required>
+    <input type="date" id="deadline_date" name="deadline_date" required min="<?php echo date('Y-m-d'); ?>">
   </div>
 
   <div class="form-group">

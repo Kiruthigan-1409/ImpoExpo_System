@@ -504,6 +504,22 @@ body {
   font-weight: 600;
   color: #fff;
 }
+/* For Confirmed orders */
+.confirmed-safe {
+  background-color: #b3e5fc;  /* light blue */
+  color: #0277bd;
+}
+
+.confirmed-soon {
+  background-color: #ffe082;  /* light amber */
+  color: #f57c00;
+}
+
+.confirmed-overdue {
+  background-color: #ffccbc;  /* light coral */
+  color: #d84315;
+}
+
 
 /* Overdue */
 /* Overdue (approaching deadline) */

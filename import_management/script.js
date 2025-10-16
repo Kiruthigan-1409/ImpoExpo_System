@@ -407,8 +407,8 @@ document.addEventListener('DOMContentLoaded', () => {
           plugins: {
             legend: { display: false },
             datalabels: {
-              anchor: 'end',
-              align: 'top',
+              anchor: 'center',
+              align: 'center',
               color: '#555',
               font: { size: 13 },
               formatter: (val) => val
@@ -446,7 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
             y: { stacked: true, beginAtZero: true }
           },
           plugins: {
-            legend: { position: 'bottom' },
+            legend: { position: 'center' },
             datalabels: {
               color: '#444',
               font: { weight: 'bold', size: 13 },
@@ -483,6 +483,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       downloadBtn.disabled = false;
 
+      if (data.rows.length > 10) {
+        showActivityMessage();
+        launchConfetti();
+      }
+
     } catch (error) {
       reportPlaceholder.innerHTML = `<p>Error loading report.</p>`;
       downloadBtn.disabled = true;
@@ -491,6 +496,59 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error(error);
     }
   });
+
+  function showReport(data) {
+  // Your existing chart rendering
+  renderCharts(data);
+
+  // Trigger confetti if more than 10 records
+  if (data.length > 10) {
+    // Delay slightly so charts appear first
+    setTimeout(() => {
+      launchConfetti();
+    }, 800);
+  }
+}
+
+function showActivityMessage() {
+  const msg = document.getElementById('activityMessage');
+  if (!msg) return;
+  msg.classList.add('show');
+  setTimeout(() => {
+    msg.classList.remove('show');
+  }, 3000); // Show for 3 seconds
+}
+
+function launchConfetti() {
+  const duration = 3 * 1000;
+  const animationEnd = Date.now() + duration;
+  const defaults = { startVelocity: 25, spread: 360, ticks: 60, zIndex: 1000 };
+
+  function randomInRange(min, max) {
+    return Math.random() * (max - min) + min;
+  }
+
+  const interval = setInterval(() => {
+    const timeLeft = animationEnd - Date.now();
+
+    if (timeLeft <= 0) {
+      return clearInterval(interval);
+    }
+
+    const particleCount = 50 * (timeLeft / duration);
+    // Two bursts from random sides
+    confetti({
+      ...defaults,
+      particleCount,
+      origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+    });
+    confetti({
+      ...defaults,
+      particleCount,
+      origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+    });
+  }, 250);
+}
 
   // PDF Download handler
   downloadBtn.addEventListener('click', () => {
